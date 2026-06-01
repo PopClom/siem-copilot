@@ -1,0 +1,62 @@
+embedding:
+  model: BAAI/bge-small-en-v1.5
+  device: cpu
+  batch-size: 512
+
+vector-db:
+  type: qdrant
+  host: localhost
+  port: 6333
+  collection: siem_logs
+
+llm:
+  model: claude-sonnet-4-20250514
+  api-key: ENV_VAR_CLAUDE
+  temperature: 0.0
+
+grouping:
+  host: true
+  user: false
+  time-window: 1m
+
+sources:
+  - name: splunk_attack_sysmon
+    enabled: true
+    type: file
+    input-format: raw-sysmon-log
+    semantic-type: windows-sysmon
+    path: ./datasets/splunk_attack_data/sysmon/
+    recursive: true
+    file-patterns:
+      - "*.log"
+
+  - name: windows_security_dataset
+    enabled: false
+    type: file
+    input-format: raw-windows-security-log
+    semantic-type: windows-security
+    path: ./datasets/windows_security/
+    recursive: true
+    file-patterns:
+      - "*.log"
+
+  - name: wazuh_local
+    enabled: false
+    type: opensearch
+    input-format: wazuh-opensearch
+    semantic-type: windows-sysmon
+    connection:
+      host: localhost
+      port: 9200
+      index: wazuh-alerts-*
+      auth:
+        username: admin
+        password: SecretPassword
+      ssl:
+        verify: false
+    polling:
+      enabled: true
+      interval: 30s
+    query:
+      agent-name: windowslab
+      min-rule-level: 3

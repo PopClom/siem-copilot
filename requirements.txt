@@ -1,0 +1,16 @@
+# Core
+pydantic>=2.0
+pyyaml>=6.0
+
+# Embeddings
+sentence-transformers>=2.7
+torch>=2.0          # CPU build is fine; GPU users replace with the CUDA wheel
+
+# Vector store
+qdrant-client>=1.9
+
+# Future: LLM integration
+anthropic>=0.25
+
+# Dev / testing
+pytest>=8.0
