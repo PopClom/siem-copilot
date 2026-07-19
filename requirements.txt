@@ -9,8 +9,12 @@ torch>=2.0          # CPU build is fine; GPU users replace with the CUDA wheel
 # Vector store
 qdrant-client>=1.9
 
-# Future: LLM integration
+# LLM integration
 anthropic>=0.25
+
+# Rest API
+fastapi>=0.138
+uvicorn>=0.51
 
 # Dev / testing
 pytest>=8.0

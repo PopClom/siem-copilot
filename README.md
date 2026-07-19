@@ -47,23 +47,49 @@ siem-copilot/
 ├── config/config.yaml
 ├── main.py                          ← CLI con argparse
 ├── requirements.txt
-└── src/
-    ├── models.py                    ← Dataclasses compartidos (RawEvent, NormalizedEvent, EventWindow)
-    ├── pipeline.py                  ← Orquestador general
-    ├── config/settings.py           ← Pydantic v2 para validar el YAML
-    ├── ingestion/
-    │   ├── parsers.py               ← Registro de parsers (dummy extensible)
-    │   └── reader.py                ← Lee archivos → yields RawEvents
-    ├── normalization/normalizer.py  ← Limpieza de ruido + builders de descripción
-    ├── windowing/windower.py        ← Ventanas temporales con solapamiento
-    ├── embedding/embedder.py        ← sentence-transformers, lazy load, batch
-    └── vectordb/qdrant_store.py     ← Qdrant: colección, upsert, búsqueda
+├── src/
+│   ├── models.py                    ← Dataclasses compartidos (RawEvent, NormalizedEvent, EventWindow)
+│   ├── pipeline.py                  ← Orquestador general
+│   ├── config/settings.py           ← Pydantic v2 para validar el YAML
+│   ├── ingestion/
+│   │   ├── parsers.py               ← Registro de parsers (dummy extensible)
+│   │   └── reader.py                ← Lee archivos → yields RawEvents
+│   ├── normalization/normalizer.py  ← Limpieza de ruido + builders de descripción
+│   ├── windowing/windower.py        ← Ventanas temporales con solapamiento
+│   ├── embedding/embedder.py        ← sentence-transformers, lazy load, batch
+│   ├── vectordb/qdrant_store.py     ← Qdrant: colección, upsert, búsqueda
+│   └── rag/
+│       ├── retriever.py             ← embed query + búsqueda en Qdrant
+│       ├── prompt.py                ← construcción del prompt con few-shot
+│       ├── llm.py                   ← cliente Anthropic, streaming-ready
+│       └── chain.py                 ← orquesta retriever → prompt → llm
+└── api/
+    ├── main.py                      ← app FastAPI, lifespan, routers
+    ├── routers/
+    │   ├── query.py                 ← POST /query
+    │   └── health.py                ← GET /health
+    └── schemas.py                   ← Pydantic request/response models
 ```
 
 ## Cómo ejecutar
 
-`python3 -m venv venv`
-`.\venv\Scripts\Activate.ps1`
-Si da error: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-`pip install -r requirements.txt`
-`python main.py`
+```bash
+python3 -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# Si da error:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+pip install -r requirements.txt
+python main.py
+```
+
+## Ejecutar API
+
+```bash
+uvicorn api.main:app --reload --port 8000
+
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Were there any lateral movement indicators?"}'
+```

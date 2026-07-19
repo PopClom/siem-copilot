@@ -10,7 +10,7 @@ vector-db:
   collection: siem_logs
 
 llm:
-  model: claude-sonnet-4-20250514
+  model: claude-sonnet-5-20250714   # introductory $2/$10 hasta agosto
   api-key: ENV_VAR_CLAUDE
   temperature: 0.0
 

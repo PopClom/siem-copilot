@@ -72,7 +72,7 @@ class QdrantStore:
 
     def ensure_collection(self, dimension: int) -> None:
         """Create the collection if it does not already exist."""
-        from qdrant_client.models import Distance, VectorParams
+        from qdrant_client.models import Distance, VectorParams, PayloadSchemaType
 
         existing = {c.name for c in self.client.get_collections().collections}
 
@@ -88,6 +88,12 @@ class QdrantStore:
             collection_name=self.config.collection,
             vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
         )
+        #for field in ["host", "user", "source_name"]:
+        #    self.client.create_payload_index(
+        #        collection_name=self.config.collection,
+        #        field_name=field,
+        #        field_schema=PayloadSchemaType.KEYWORD,
+        #    )
 
     # ------------------------------------------------------------------
     # Upsert
@@ -161,9 +167,9 @@ class QdrantStore:
             ]
             qdrant_filter = Filter(must=conditions)
 
-        hits = self.client.search(
+        hits = self.client.query_points(
             collection_name=self.config.collection,
-            query_vector=query_vector,
+            query=query_vector,
             limit=top_k,
             query_filter=qdrant_filter,
             with_payload=True,
@@ -171,7 +177,7 @@ class QdrantStore:
 
         return [
             {"score": hit.score, **hit.payload}
-            for hit in hits
+            for hit in hits.points
         ]
 
 
