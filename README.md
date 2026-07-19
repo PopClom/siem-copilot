@@ -82,14 +82,26 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
 pip install -r requirements.txt
 python main.py
+
+# Drop and recreate collection
+python main.py --reingest
 ```
 
 ## Ejecutar API
 
 ```bash
+# Normal (solo INFO y superiores)
 uvicorn api.main:app --reload --port 8000
 
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Were there any lateral movement indicators?"}'
+# Con diagnóstico completo
+LOG_LEVEL=DEBUG uvicorn api.main:app --reload --port 8000
+
+# En Windows (cmd)
+set LOG_LEVEL=DEBUG
+uvicorn api.main:app --reload --port 8000
+
+# Ejemplo de uso
+curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d "{\"question\":\"Were there any lateral movement indicators?\"}"
+
+{"answer":"Based on the provided log windows from **win-dc-8537412.attackrange.local (12:54:55–12:55:25 UTC)**, I do not see any indicators of lateral movement.\n\n**What the logs actually show:**\n- A large volume of Sysmon `process_access` (EventID=10) events involving `TiWorker.exe` (Windows Servicing Stack) and standard system processes (`svchost.exe`, `csrss.exe`, `conhost.exe`) — consistent with routine Windows Update/servicing activity.\n- A series of `process_create` (EventID=1) events for **SplunkUniversalForwarder** components (`splunk-admon.exe`, `splunk-netmon.exe`, `splunk-powershell.exe`, `splunk-regmon.exe`, `splunk-winprintmon.exe`, `btool.exe`, `splunk.exe restart`) — this is normal Splunk Universal Forwarder startup/restart behavior, including its modular input processes and `btool` configuration checks.\n- No network connections (e.g., SMB/445, WinRM/5985, RDP/3389), no `net.exe`/`net1.exe` usage, no remote logon events (Type 3/10), and no credential-dumping tools (e.g., `mimikatz`, `procdump`, `lsass` access) are present in this context.\n\n**Assessment:**\nThis activity pattern is consistent with **benign local host maintenance** — Windows servicing (TiWorker) and Splunk Forwarder restart/reconfiguration — rather than an attack. There are no cross-host connections, remote authentication events, or remote execution artifacts that would indicate lateral movement.\n\n**Caveat:** This context only covers a single host (`win-dc-8537412.attackrange.local`) over a ~30-second window. If lateral movement occurred, it would likely appear in network connection logs, authentication/logon events, or remote process creation on other hosts — none of which are present in this context. I cannot confirm or rule out lateral movement outside this window based on the data provided.","query":"Were there any lateral movement indicators?","chunks_retrieved":8,"chunks_used":2,"latency_ms":11979,"sources":[{"window_id":"splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:55+00:00","host":"win-dc-8537412.attackrange.local","window_start":"2020-10-08T12:54:55+00:00","window_end":"2020-10-08T12:55:05+00:00","score":0.6932,"event_count":2},{"window_id":"splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:15+00:00","host":"win-dc-8537412.attackrange.local","window_start":"2020-10-08T12:55:15+00:00","window_end":"2020-10-08T12:55:25+00:00","score":0.6859,"event_count":422}]}
 ```

@@ -46,10 +46,12 @@ class IngestionPipeline:
         settings: Settings,
         overlap: bool = True,
         dry_run: bool = False,
+        reingest: bool = False,
     ) -> None:
         self.settings = settings
         self.overlap = overlap
         self.dry_run = dry_run
+        self.reingest = reingest
 
         self._embedder: Optional[Embedder] = None
         self._store: Optional[QdrantStore] = None
@@ -85,6 +87,11 @@ class IngestionPipeline:
             return {}
 
         logger.info("Starting pipeline for %d source(s) …", len(sources))
+
+        if self.reingest and not self.dry_run:
+            logger.info("--reingest: dropping collection '%s' before ingestion …", self.settings.vector_db.collection)
+            self.store.drop_collection()
+
         summary: dict[str, int] = {}
 
         for source in sources:

@@ -31,10 +31,16 @@ class LLMClient:
     system:      system prompt string (built externally in prompt.py)
     """
 
+    # Models that deprecated the temperature parameter (adaptive thinking)
+    _NO_TEMPERATURE_MODELS = ("claude-sonnet-5", "claude-opus-4-8", "claude-fable-5")
+
     def __init__(self, config: LLMConfig, system: str) -> None:
         self.config = config
         self.system = system
         self._client = None
+
+    def _supports_temperature(self) -> bool:
+        return not any(self.config.model.startswith(m) for m in self._NO_TEMPERATURE_MODELS)
 
     @property
     def client(self):
@@ -66,13 +72,16 @@ class LLMClient:
         """Send messages and return the full assistant response as a string."""
         logger.debug("Sending %d message(s) to %s", len(messages), self.config.model)
 
-        response = self.client.messages.create(
+        kwargs = dict(
             model=self.config.model,
             max_tokens=2048,
-            temperature=self.config.temperature,
             system=self.system,
             messages=messages,
         )
+        if self._supports_temperature():
+            kwargs["temperature"] = self.config.temperature
+
+        response = self.client.messages.create(**kwargs)
 
         # Extract text from the first content block
         text = "".join(
@@ -96,12 +105,15 @@ class LLMClient:
 
     def stream(self, messages: list[dict]) -> Generator[str, None, None]:
         """Yield text deltas as they arrive from the API."""
-        with self.client.messages.stream(
+        kwargs = dict(
             model=self.config.model,
             max_tokens=2048,
-            temperature=self.config.temperature,
             system=self.system,
             messages=messages,
-        ) as stream_ctx:
+        )
+        if self._supports_temperature():
+            kwargs["temperature"] = self.config.temperature
+
+        with self.client.messages.stream(**kwargs) as stream_ctx:
             for delta in stream_ctx.text_stream:
                 yield delta

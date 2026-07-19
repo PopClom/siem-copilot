@@ -50,6 +50,10 @@ def _parse_args() -> argparse.Namespace:
         help="Use non-overlapping (tumbling) windows instead of sliding windows"
     )
     parser.add_argument(
+        "--reingest", action="store_true",
+        help="Drop and recreate the Qdrant collection before ingesting (clean slate)"
+    )
+    parser.add_argument(
         "--log-level", default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         help="Logging verbosity (default: INFO)"
@@ -84,6 +88,7 @@ def main() -> None:
         settings=settings,
         overlap=not args.no_overlap,
         dry_run=args.dry_run,
+        reingest=args.reingest,
     )
 
     summary = pipeline.run()

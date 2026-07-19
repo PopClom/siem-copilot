@@ -70,6 +70,15 @@ class QdrantStore:
     # Collection management
     # ------------------------------------------------------------------
 
+    def drop_collection(self) -> None:
+        """Delete the collection and all its data. Used before a full re-ingest."""
+        existing = {c.name for c in self.client.get_collections().collections}
+        if self.config.collection in existing:
+            self.client.delete_collection(self.config.collection)
+            logger.info("Collection '%s' deleted.", self.config.collection)
+        else:
+            logger.info("Collection '%s' does not exist, nothing to drop.", self.config.collection)
+
     def ensure_collection(self, dimension: int) -> None:
         """Create the collection if it does not already exist."""
         from qdrant_client.models import Distance, VectorParams, PayloadSchemaType

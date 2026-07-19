@@ -108,14 +108,32 @@ class Retriever:
 
         chunks = [self._to_chunk(hit) for hit in raw_hits]
 
+        # Log all scores before filtering so we can tune the threshold
+        if chunks:
+            scores = [c.score for c in chunks]
+            logger.debug(
+                "Scores before threshold (%.2f): %s",
+                self.score_threshold,
+                ", ".join(f"{s:.4f}" for s in scores),
+            )
+        else:
+            logger.debug("Qdrant returned 0 hits for query: %r", query)
+
         # Apply score threshold
-        chunks = [c for c in chunks if c.score >= self.score_threshold]
+        passing = [c for c in chunks if c.score >= self.score_threshold]
+        dropped = len(chunks) - len(passing)
+        if dropped:
+            logger.debug(
+                "%d/%d chunks dropped by threshold %.2f (min score was %.4f)",
+                dropped, len(chunks), self.score_threshold, min(c.score for c in chunks),
+            )
+        chunks = passing
 
         if not chunks:
             logger.info("No chunks above threshold %.2f for query: %r", self.score_threshold, query)
         else:
-            logger.debug(
-                "Retrieved %d chunks (scores %.3f–%.3f)",
+            logger.info(
+                "Returning %d chunks (scores %.4f–%.4f)",
                 len(chunks), chunks[-1].score, chunks[0].score,
             )
 

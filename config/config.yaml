@@ -10,14 +10,14 @@ vector-db:
   collection: siem_logs
 
 llm:
-  model: claude-sonnet-5-20250714   # introductory $2/$10 hasta agosto
-  api-key: ENV_VAR_CLAUDE
-  temperature: 0.0
+  model: claude-sonnet-5
+  api-key:
+  temperature: 0.0 # ignored for sonnet 5 as it uses adaptive thinking
 
 grouping:
   host: true
   user: false
-  time-window: 1m
+  time-window: 10s
 
 sources:
   - name: splunk_attack_sysmon

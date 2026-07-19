@@ -92,6 +92,18 @@ class RAGChain:
         chunks_used = len(chunks_used_list)
 
         # 3. Build prompt
+        if chunks_used_list:
+            logger.debug("Chunks passed to LLM:")
+            for i, c in enumerate(chunks_used_list, 1):
+                logger.debug(
+                    "  [%d] score=%.4f host=%s %s–%s\n      %s",
+                    i, c.score, c.host,
+                    c.window_start[11:19], c.window_end[11:19],
+                    c.aggregated_text[:120].replace("\n", " ↵ "),
+                )
+        else:
+            logger.debug("No chunks passed to LLM — context will be empty.")
+
         messages = build_messages(question, chunks_used_list)
 
         # 4. Call LLM
@@ -120,7 +132,7 @@ class RAGChain:
 
     # Approximate token budget for context (conservative; BGE chunks are ~200 tokens each)
     _MAX_CHUNKS = 6
-    _MAX_CHARS  = 12_000  # ~3 000 tokens at 4 chars/token
+    _MAX_CHARS  = 100_000  # ~25 000 tokens at 4 chars/token
 
     def _select_chunks(self, chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
         """
@@ -132,11 +144,21 @@ class RAGChain:
 
         for chunk in chunks[: self._MAX_CHUNKS]:
             chunk_len = len(chunk.aggregated_text)
+            logger.debug(
+                "_select_chunks: chunk host=%s len=%d total_so_far=%d (budget=%d) text_preview=%r",
+                chunk.host, chunk_len, total_chars, self._MAX_CHARS,
+                chunk.aggregated_text[:80],
+            )
             if total_chars + chunk_len > self._MAX_CHARS:
+                logger.debug("_select_chunks: budget exceeded, stopping.")
                 break
             selected.append(chunk)
             total_chars += chunk_len
 
+        logger.debug(
+            "_select_chunks: %d/%d chunks selected (%d chars total)",
+            len(selected), len(chunks), total_chars,
+        )
         return selected
 
     @staticmethod
