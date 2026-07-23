@@ -111,6 +111,36 @@ def format_context(chunks: list[RetrievedChunk]) -> str:
 # Message builder
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# HyDE — Hypothetical Document Embedding
+# ---------------------------------------------------------------------------
+
+HYDE_SYSTEM_PROMPT = """\
+You are a cybersecurity expert. Your task is to generate a hypothetical security \
+log window that would be the ideal answer to the analyst's question.
+
+Rules:
+- Write ONLY the log window text, nothing else. No explanation, no preamble.
+- Use exactly this format:
+    Host: <hostname> | Window: HH:MM:SS–HH:MM:SS UTC
+    [HH:MM:SS] <event description>
+    [HH:MM:SS] <event description>
+- Use realistic but fictional hostnames, IPs, and usernames.
+- Include 3–8 log lines that directly answer the question.
+- Use the same terse pipe-separated style as real Sysmon/Windows event logs.
+"""
+
+HYDE_USER_TEMPLATE = """\
+Generate a hypothetical log window that would answer this question:
+<question>{question}</question>
+"""
+
+
+def build_hyde_messages(question: str) -> list[dict]:
+    """Build the messages for the HyDE document generation call."""
+    return [{"role": "user", "content": HYDE_USER_TEMPLATE.format(question=question)}]
+
+
 def build_messages(query: str, chunks: list[RetrievedChunk]) -> list[dict]:
     """
     Return the messages list for the Anthropic API call.

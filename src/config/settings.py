@@ -137,6 +137,18 @@ class SourceConfig(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# RAG config
+# ---------------------------------------------------------------------------
+
+class RagConfig(BaseModel):
+    use_hyde: bool = Field(False, alias="use-hyde")
+    top_k: int = Field(8, alias="top-k")
+    score_threshold: float = Field(0.30, alias="score-threshold")
+
+    model_config = {"populate_by_name": True}
+
+
+# ---------------------------------------------------------------------------
 # Root settings
 # ---------------------------------------------------------------------------
 
@@ -145,6 +157,7 @@ class Settings(BaseModel):
     vector_db: VectorDBConfig = Field(..., alias="vector-db")
     llm: LLMConfig
     grouping: GroupingConfig = GroupingConfig()
+    rag: RagConfig = Field(default_factory=RagConfig)
     sources: list[SourceConfig] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}

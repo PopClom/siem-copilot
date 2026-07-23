@@ -97,12 +97,6 @@ class QdrantStore:
             collection_name=self.config.collection,
             vectors_config=VectorParams(size=dimension, distance=Distance.COSINE),
         )
-        #for field in ["host", "user", "source_name"]:
-        #    self.client.create_payload_index(
-        #        collection_name=self.config.collection,
-        #        field_name=field,
-        #        field_schema=PayloadSchemaType.KEYWORD,
-        #    )
 
     # ------------------------------------------------------------------
     # Upsert

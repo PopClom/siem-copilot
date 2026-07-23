@@ -14,6 +14,11 @@ llm:
   api-key:
   temperature: 0.0 # ignored for sonnet 5 as it uses adaptive thinking
 
+rag:
+  use-hyde: false        # set to true to enable Hypothetical Document Embedding
+  top-k: 8              # chunks retrieved from Qdrant per query
+  score-threshold: 0.30  # minimum cosine similarity to pass a chunk to the LLM
+
 grouping:
   host: true
   user: false

@@ -35,6 +35,8 @@ class RAGResponse:
     chunks_retrieved: int
     chunks_used: int
     latency_ms: int
+    hyde_used: bool = False
+    hypothetical_doc: Optional[str] = None
     sources: list[dict] = field(default_factory=list)
 
 
@@ -53,14 +55,18 @@ class RAGChain:
     """
 
     def __init__(self, settings: Settings) -> None:
+        rag_cfg = settings.rag
         self._retriever = Retriever(
             embedding_config=settings.embedding,
             vectordb_config=settings.vector_db,
+            top_k=rag_cfg.top_k,
+            score_threshold=rag_cfg.score_threshold,
         )
         self._llm = LLMClient(
             config=settings.llm,
             system=SYSTEM_PROMPT,
         )
+        self._use_hyde: bool = settings.rag.use_hyde if settings.rag else False
 
     # ------------------------------------------------------------------
     # Public API
@@ -82,9 +88,19 @@ class RAGChain:
         filters:  optional Qdrant metadata filters {"host": "srv-01", ...}
         """
         t0 = time.monotonic()
+        hypothetical_doc: Optional[str] = None
 
         # 1. Retrieve
-        chunks = self._retriever.retrieve(question, top_k=top_k, filters=filters)
+        if self._use_hyde:
+            logger.info("Using HyDE retrieval for query: %r", question)
+            chunks, hypothetical_doc = self._retriever.retrieve_with_hyde(
+                query=question,
+                llm=self._llm,
+                top_k=top_k,
+                filters=filters,
+            )
+        else:
+            chunks = self._retriever.retrieve(question, top_k=top_k, filters=filters)
         chunks_retrieved = len(chunks)
 
         # 2. Optionally truncate to avoid exceeding context window
@@ -123,6 +139,8 @@ class RAGChain:
             chunks_retrieved=chunks_retrieved,
             chunks_used=chunks_used,
             latency_ms=latency_ms,
+            hyde_used=self._use_hyde,
+            hypothetical_doc=hypothetical_doc,
             sources=self._format_sources(chunks_used_list),
         )
 

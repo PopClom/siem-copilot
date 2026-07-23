@@ -45,5 +45,7 @@ async def query(request: Request, body: QueryRequest) -> QueryResponse:
         chunks_retrieved=result.chunks_retrieved,
         chunks_used=result.chunks_used,
         latency_ms=result.latency_ms,
+        hyde_used=result.hyde_used,
+        hypothetical_doc=result.hypothetical_doc,
         sources=result.sources,
     )

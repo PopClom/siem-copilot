@@ -22,9 +22,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+from typing import TYPE_CHECKING
+
 from src.config.settings import EmbeddingConfig, VectorDBConfig
 from src.embedding.embedder import Embedder
 from src.vectordb.qdrant_store import QdrantStore
+
+if TYPE_CHECKING:
+    from src.rag.llm import LLMClient
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +143,80 @@ class Retriever:
             )
 
         return chunks
+
+    def retrieve_with_hyde(
+        self,
+        query: str,
+        llm: "LLMClient",
+        top_k: Optional[int] = None,
+        filters: Optional[dict] = None,
+    ) -> tuple[list[RetrievedChunk], str]:
+        """
+        HyDE variant: ask the LLM to generate a hypothetical log window
+        that would answer *query*, embed that document instead of the raw
+        query, then search Qdrant.
+
+        Returns (chunks, hypothetical_document) so the caller can log/inspect
+        what the LLM generated.
+        """
+        from src.rag.prompt import HYDE_SYSTEM_PROMPT, build_hyde_messages
+
+        # 1. Generate hypothetical document
+        hyde_messages = build_hyde_messages(query)
+        original_system = llm.system
+        llm.system = HYDE_SYSTEM_PROMPT
+        try:
+            hypothetical_doc = llm.complete(hyde_messages)
+        finally:
+            llm.system = original_system  # restore for the main RAG call
+
+        logger.debug("HyDE hypothetical document:\n%s", hypothetical_doc)
+
+        # 2. Embed the hypothetical document using the passage prefix
+        #    (it's a document, not a query, so we use the passage prefix)
+        model_name = self._embedder.config.model.lower()
+        if "bge" in model_name:
+            prefixed = f"{self._embedder._BGE_PASSAGE_PREFIX}{hypothetical_doc}"
+        else:
+            prefixed = hypothetical_doc
+
+        vectors = self._embedder.embed_texts([prefixed])
+        hyde_vector = vectors[0]
+
+        # 3. Search with the hypothetical vector
+        k = top_k or self.top_k
+        raw_hits = self._store.semantic_search(
+            query_vector=hyde_vector,
+            top_k=k,
+            filters=filters,
+        )
+        chunks = [self._to_chunk(hit) for hit in raw_hits]
+
+        if chunks:
+            scores = [c.score for c in chunks]
+            logger.debug(
+                "HyDE scores before threshold (%.2f): %s",
+                self.score_threshold,
+                ", ".join(f"{s:.4f}" for s in scores),
+            )
+
+        passing = [c for c in chunks if c.score >= self.score_threshold]
+        dropped = len(chunks) - len(passing)
+        if dropped:
+            logger.debug(
+                "HyDE: %d/%d chunks dropped by threshold %.2f",
+                dropped, len(chunks), self.score_threshold,
+            )
+
+        if not passing:
+            logger.info("HyDE: no chunks above threshold %.2f", self.score_threshold)
+        else:
+            logger.info(
+                "HyDE: returning %d chunks (scores %.4f–%.4f)",
+                len(passing), passing[-1].score, passing[0].score,
+            )
+
+        return passing, hypothetical_doc
 
     # ------------------------------------------------------------------
     # Internal
