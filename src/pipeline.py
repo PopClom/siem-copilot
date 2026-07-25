@@ -117,7 +117,7 @@ class IngestionPipeline:
         logger.info("Source '%s': %d normalised events.", source.name, len(events))
 
         # 2. Window
-        windows = build_windows(events, self.settings.grouping, overlap=self.overlap)
+        windows = build_windows(events, self.settings.grouping)
         if not windows:
             logger.warning("Source '%s': no windows generated.", source.name)
             return 0

@@ -15,14 +15,15 @@ llm:
   temperature: 0.0 # ignored for sonnet 5 as it uses adaptive thinking
 
 rag:
-  use-hyde: false        # set to true to enable Hypothetical Document Embedding
-  top-k: 8              # chunks retrieved from Qdrant per query
-  score-threshold: 0.30  # minimum cosine similarity to pass a chunk to the LLM
+  use-hyde: false
+  top-k: 8
+  score-threshold: 0.30
 
 grouping:
   host: true
   user: false
   time-window: 10s
+  max-events-per-chunk: 1000
 
 sources:
   - name: splunk_attack_sysmon

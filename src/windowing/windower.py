@@ -42,7 +42,6 @@ logger = logging.getLogger(__name__)
 def build_windows(
     events: list[NormalizedEvent],
     grouping: GroupingConfig,
-    overlap: bool = True,
 ) -> list[EventWindow]:
     """
     Consume a list of NormalizedEvents and return a list of EventWindows.
@@ -51,13 +50,13 @@ def build_windows(
     ----------
     events:   flat list of events (any order; will be sorted internally)
     grouping: config block with host/user grouping flags and time_window
-    overlap:  if True, use 50 % overlapping windows (stride = window // 2)
+    overlap_ratio:  how much overlapping between two consecutive windows
     """
     if not events:
         return []
 
     window_secs = grouping.to_seconds()
-    stride_secs = window_secs // 2 if overlap else window_secs
+    stride_secs = max(1, int(window_secs * (1 - grouping.overlap_ratio)))
 
     # Sort by timestamp
     events = sorted(events, key=lambda e: e.timestamp)
@@ -68,7 +67,14 @@ def build_windows(
     windows: list[EventWindow] = []
     for group_key, group_events in groups.items():
         windows.extend(
-            _events_to_windows(group_events, group_key, window_secs, stride_secs)
+            _events_to_windows(
+                group_events,
+                group_key,
+                window_secs,
+                stride_secs,
+                grouping.max_events_per_chunk,
+                grouping.overlap_ratio
+            )
         )
 
     logger.info("Built %d windows from %d events", len(windows), len(events))
@@ -103,23 +109,31 @@ def _events_to_windows(
     group_key: GroupKey,
     window_secs: int,
     stride_secs: int,
+    max_events: int | None,
+    overlap_ratio: float,
 ) -> Iterator[EventWindow]:
     """
-    Slide a window of `window_secs` over `events` (already sorted by ts)
-    with a stride of `stride_secs`.
+    Slide a temporal window over `events` (already sorted by timestamp).
+
+    Windows are generated every `stride_secs`. If a temporal window contains
+    more than `max_events`, it is split into overlapping event chunks while
+    preserving the original temporal metadata.
     """
     if not events:
         return
 
     host, user = group_key
-    first_ts = events[0].timestamp.timestamp()
-    last_ts  = events[-1].timestamp.timestamp()
 
-    # Align first window to the nearest stride boundary
-    first_bucket = math.floor(first_ts / stride_secs)
-    last_bucket  = math.floor(last_ts  / stride_secs)
+    # Cache epoch timestamps once
+    event_epochs = [e.timestamp.timestamp() for e in events]
+    n_events     = len(events)
 
-    event_idx = 0  # pointer for sliding scan
+    first_bucket = math.floor(event_epochs[0]  / stride_secs)
+    last_bucket  = math.floor(event_epochs[-1] / stride_secs)
+
+    # Sliding pointers into the sorted event list
+    start_idx = 0
+    end_idx = 0
 
     for bucket in range(first_bucket, last_bucket + 1):
         win_start_epoch = bucket * stride_secs
@@ -128,27 +142,49 @@ def _events_to_windows(
         win_start = datetime.fromtimestamp(win_start_epoch, tz=timezone.utc)
         win_end   = datetime.fromtimestamp(win_end_epoch,   tz=timezone.utc)
 
-        # Collect events within [win_start, win_end)
-        bucket_events = [
-            e for e in events
-            if win_start_epoch <= e.timestamp.timestamp() < win_end_epoch
-        ]
+        # Advance start pointer until events are inside the window
+        while (start_idx < n_events and event_epochs[start_idx] < win_start_epoch):
+            start_idx += 1
+
+        # Advance end pointer until events leave the window
+        while (end_idx < n_events and event_epochs[end_idx] < win_end_epoch):
+            end_idx += 1
+
+        bucket_events = events[start_idx:end_idx]
 
         if not bucket_events:
             continue
 
-        source_name = bucket_events[0].source_name
+        # ------------------------------------------------------------
+        # Split oversized windows into overlapping event chunks
+        # ------------------------------------------------------------
+        if max_events is None or len(bucket_events) <= max_events:
+            chunks = [bucket_events]
+        else:
+            event_stride = max(1, int(max_events * (1 - overlap_ratio)))
+            chunks = []
 
-        window = EventWindow(
-            window_start=win_start,
-            window_end=win_end,
-            host=host,
-            user=user,
-            events=bucket_events,
-            source_name=source_name,
-        )
-        window.aggregated_text = _aggregate_text(window)
-        yield window
+            for i in range(0, len(bucket_events), event_stride):
+                chunk = bucket_events[i : i + max_events]
+                chunks.append(chunk)
+
+                if i + max_events >= len(bucket_events):
+                    break
+
+        # ------------------------------------------------------------
+        # Emit one EventWindow per chunk
+        # ------------------------------------------------------------
+        for chunk in chunks:
+            window = EventWindow(
+                window_start=win_start,
+                window_end=win_end,
+                host=host,
+                user=user,
+                events=chunk,
+                source_name=chunk[0].source_name,
+            )
+            window.aggregated_text = _aggregate_text(window)
+            yield window
 
 
 def _aggregate_text(window: EventWindow) -> str:

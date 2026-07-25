@@ -57,6 +57,8 @@ class GroupingConfig(BaseModel):
     host: bool = True
     user: bool = False
     time_window: str = Field("1m", alias="time-window")
+    max_events_per_chunk: int | None = Field(None, alias="max-events-per-chunk")
+    overlap_ratio: float = Field(0.5, alias="overlap-ratio")
 
     model_config = {"populate_by_name": True}
 
@@ -67,6 +69,20 @@ class GroupingConfig(BaseModel):
             raise ValueError(
                 f"Invalid time-window '{v}'. Use format like '1m', '30s', '1h'."
             )
+        return v
+
+    @field_validator("max_events_per_chunk")
+    @classmethod
+    def validate_max_events_per_chunk(cls, v: int | None) -> int | None:
+        if v is not None and v <= 0:
+            raise ValueError("max_events_per_chunk must be positive or None")
+        return v
+
+    @field_validator("overlap_ratio")
+    @classmethod
+    def validate_overlap_ratio(cls, v: float) -> float:
+        if not 0 <= v <= 0.75:
+            raise ValueError("overlap_ratio must be between 0 and 0.75")
         return v
 
     def to_seconds(self) -> int:
