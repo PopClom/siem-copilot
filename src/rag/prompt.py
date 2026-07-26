@@ -94,12 +94,16 @@ def format_context(chunks: list[RetrievedChunk]) -> str:
     for i, chunk in enumerate(chunks, start=1):
         host_label = chunk.host or "unknown"
         user_label = f" | User: {chunk.user}" if chunk.user else ""
-        score_label = f"{chunk.score:.3f}"
+
+        if chunk.is_neighbour:
+            kind_label = "context (neighbour)"
+        else:
+            kind_label = f"relevance: {chunk.score:.3f}"
 
         parts.append(
             f"\n[Window {i} | Host: {host_label}{user_label} | "
             f"{chunk.window_start[11:19]}–{chunk.window_end[11:19]} UTC | "
-            f"relevance: {score_label} | events: {chunk.event_count}]"
+            f"{kind_label} | events: {chunk.event_count}]"
         )
         parts.append(chunk.aggregated_text)
 

@@ -173,6 +173,7 @@ class RagConfig(BaseModel):
     use_hyde: bool = Field(False, alias="use-hyde")
     top_k: int = Field(8, alias="top-k")
     score_threshold: float = Field(0.30, alias="score-threshold")
+    expand_context: bool = Field(False, alias="expand-context")
 
     model_config = {"populate_by_name": True}
 

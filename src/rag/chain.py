@@ -37,6 +37,7 @@ class RAGResponse:
     latency_ms: int
     hyde_used: bool = False
     hypothetical_doc: Optional[str] = None
+    neighbours_added: int = 0
     sources: list[dict] = field(default_factory=list)
 
 
@@ -61,6 +62,7 @@ class RAGChain:
             vectordb_config=settings.vector_db,
             top_k=rag_cfg.top_k,
             score_threshold=rag_cfg.score_threshold,
+            expand_context=rag_cfg.expand_context,
         )
         self._llm = LLMClient(
             config=settings.llm,
@@ -101,7 +103,10 @@ class RAGChain:
             )
         else:
             chunks = self._retriever.retrieve(question, top_k=top_k, filters=filters)
-        chunks_retrieved = len(chunks)
+        chunks_retrieved = sum(1 for c in chunks if not c.is_neighbour)
+        neighbours_added = len(chunks) - chunks_retrieved
+        if neighbours_added:
+            logger.info("Context expansion added %d neighbour window(s).", neighbours_added)
 
         # 2. Optionally truncate to avoid exceeding context window
         chunks_used_list = self._select_chunks(chunks)
@@ -141,6 +146,7 @@ class RAGChain:
             latency_ms=latency_ms,
             hyde_used=self._use_hyde,
             hypothetical_doc=hypothetical_doc,
+            neighbours_added=neighbours_added,
             sources=self._format_sources(chunks_used_list),
         )
 
@@ -148,18 +154,17 @@ class RAGChain:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    _MAX_CHUNKS = 30
     _MAX_CHARS  = 100_000  # ~25 000 tokens at 4 chars/token
 
     def _select_chunks(self, chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
         """
-        Select chunks that fit within the context budget.
-        Chunks are already sorted by relevance (highest first).
+        Select chunks that fit within the context character budget.
+        Chunks are ordered: retrieved (by relevance score) first, neighbours after.
         """
         selected: list[RetrievedChunk] = []
         total_chars = 0
 
-        for chunk in chunks[: self._MAX_CHUNKS]:
+        for chunk in chunks:
             chunk_len = len(chunk.aggregated_text)
             logger.debug(
                 "_select_chunks: chunk host=%s len=%d total_so_far=%d (budget=%d) text_preview=%r",

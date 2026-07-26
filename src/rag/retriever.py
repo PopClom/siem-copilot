@@ -49,6 +49,7 @@ class RetrievedChunk:
     source_name: str
     event_count: int
     aggregated_text: str
+    is_neighbour: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -77,9 +78,11 @@ class Retriever:
         vectordb_config: VectorDBConfig,
         top_k: int = 8,
         score_threshold: float = 0.30,
+        expand_context: bool = False,
     ) -> None:
         self.top_k = top_k
         self.score_threshold = score_threshold
+        self.expand_context = expand_context
         self._embedder = Embedder(embedding_config)
         self._store = QdrantStore(vectordb_config)
 
@@ -141,6 +144,9 @@ class Retriever:
                 "Returning %d chunks (scores %.4f–%.4f)",
                 len(chunks), chunks[-1].score, chunks[0].score,
             )
+
+        if self.expand_context and chunks:
+            chunks = self._expand_with_neighbours(chunks)
 
         return chunks
 
@@ -216,11 +222,102 @@ class Retriever:
                 len(passing), passing[-1].score, passing[0].score,
             )
 
+        if self.expand_context and passing:
+            passing = self._expand_with_neighbours(passing)
+
         return passing, hypothetical_doc
 
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    def _expand_with_neighbours(
+        self,
+        chunks: list[RetrievedChunk],
+    ) -> list[RetrievedChunk]:
+        """
+        For each retrieved chunk, fetch the immediately preceding and
+        following window on the same host and append them to the list.
+
+        Neighbours are marked with is_neighbour=True and score=0.0 so the
+        prompt can label them as context rather than direct matches.
+
+        Only windows that are not already in the result set are added,
+        preserving the original ranking order (retrieved chunks first,
+        neighbours appended after).
+        """
+        from datetime import timezone
+        from qdrant_client.models import DatetimeRange, FieldCondition, Filter, MatchValue
+
+        existing_ids: set[str] = {c.window_id for c in chunks}
+        neighbours: list[RetrievedChunk] = []
+
+        for chunk in chunks:
+            if not chunk.host or not chunk.window_start or not chunk.window_end:
+                continue
+
+            try:
+                start = datetime.fromisoformat(chunk.window_start)
+                end   = datetime.fromisoformat(chunk.window_end)
+            except ValueError:
+                logger.debug("Could not parse timestamps for chunk %s", chunk.window_id)
+                continue
+
+            # Ensure timezone-aware
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+
+            window_duration = end - start
+
+            # (window_before_start, window_before_end), (window_after_start, window_after_end)
+            neighbour_ranges = [
+                (start - window_duration, start),   # window immediately before
+                (end, end + window_duration),        # window immediately after
+            ]
+
+            for nb_start, nb_end in neighbour_ranges:
+                try:
+                    hits, _ = self._store.client.scroll(
+                        collection_name=self._store.config.collection,
+                        limit=1,
+                        with_payload=True,
+                        with_vectors=False,
+                        scroll_filter=Filter(
+                            must=[
+                                FieldCondition(
+                                    key="host",
+                                    match=MatchValue(value=chunk.host),
+                                ),
+                                FieldCondition(
+                                    key="window_start",
+                                    range=DatetimeRange(gte=nb_start, lt=nb_end),
+                                ),
+                            ]
+                        ),
+                    )
+                except Exception as exc:
+                    logger.debug("Neighbour scroll failed: %s", exc)
+                    continue
+
+                for point in hits:
+                    payload = point.payload or {}
+                    wid = payload.get("window_id", "")
+                    if not wid or wid in existing_ids:
+                        continue
+                    existing_ids.add(wid)
+                    neighbours.append(
+                        self._to_chunk({"score": 0.0, **payload}, is_neighbour=True)
+                    )
+
+        if neighbours:
+            logger.info(
+                "Context expansion: added %d neighbour window(s).", len(neighbours)
+            )
+
+        # Retrieved chunks first (ranked by similarity), neighbours appended after
+        return chunks + neighbours
 
     def _embed_query(self, query: str) -> list[float]:
         """Apply the BGE query prefix (if applicable) before embedding."""
@@ -230,7 +327,7 @@ class Retriever:
         return vectors[0]
 
     @staticmethod
-    def _to_chunk(hit: dict) -> RetrievedChunk:
+    def _to_chunk(hit: dict, is_neighbour: bool = False) -> RetrievedChunk:
         return RetrievedChunk(
             score=hit.get("score", 0.0),
             window_id=hit.get("window_id", ""),
@@ -241,4 +338,5 @@ class Retriever:
             source_name=hit.get("source_name", ""),
             event_count=hit.get("event_count", 0),
             aggregated_text=hit.get("aggregated_text", ""),
+            is_neighbour=is_neighbour,
         )
