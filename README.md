@@ -58,11 +58,15 @@ siem-copilot/
 │   ├── windowing/windower.py        ← Ventanas temporales con solapamiento
 │   ├── embedding/embedder.py        ← sentence-transformers, lazy load, batch
 │   ├── vectordb/qdrant_store.py     ← Qdrant: colección, upsert, búsqueda
-│   └── rag/
-│       ├── retriever.py             ← embed query + búsqueda en Qdrant
-│       ├── prompt.py                ← construcción del prompt con few-shot
-│       ├── llm.py                   ← cliente Anthropic, streaming-ready
-│       └── chain.py                 ← orquesta retriever → prompt → llm
+│   ├── rag/
+│   │   ├── retriever.py             ← embed query + búsqueda en Qdrant
+│   │   ├── prompt.py                ← construcción del prompt con few-shot
+│   │   ├── llm.py                   ← cliente Anthropic, streaming-ready
+│   │   └── chain.py                 ← orquesta retriever → prompt → llm
+│   └── anomaly/
+│       ├── detector.py              ← Isolation Forest + HDBSCAN sobre vectores de Qdrant
+│       └── reporter.py              ← texto resumen para el LLM
+│
 └── api/
     ├── main.py                      ← app FastAPI, lifespan, routers
     ├── routers/
@@ -85,6 +89,71 @@ python main.py
 
 # Drop and recreate collection
 python main.py --reingest
+
+# Anomaly detection
+python main.py --detect-anomalies
+
+============================================================
+  Anomaly Detection Results
+============================================================
+  Windows analysed : 53
+  Anomalies found  : 31 (58.5%)
+  Behaviour clusters: 2
+  HDBSCAN noise    : 58.5%
+
+  Top anomalous windows:
+    [OUTLIER] host=win-dc-8537412.attackrange.local 12:56:55–12:57:05 UTC if_score=1.000 cluster=-1
+    [OUTLIER] host=win-dc-8537412.attackrange.local 12:54:05–12:54:15 UTC if_score=0.980 cluster=-1
+    [OUTLIER] host=win-dc-8537412.attackrange.local 12:57:00–12:57:10 UTC if_score=0.954 cluster=-1
+    [OUTLIER] host=win-dc-8537412.attackrange.local 12:53:30–12:53:40 UTC if_score=0.899 cluster=-1
+    [OUTLIER] host=win-dc-8537412.attackrange.local 12:54:10–12:54:20 UTC if_score=0.840 cluster=-1
+
+============================================================
+  LLM Summary
+============================================================
+## Anomaly Summary — win-dc-8537412.attackrange.local (12:52–12:57 UTC)
+
+**Scope:** 31 of 53 windows (58.5%) flagged as anomalous, all on a single host (`win-dc-8537412.attackrange.local`), all HDBSCAN noise points (no stable cluster membership) within a tight ~5-minute span (12:52:40–12:57:30 UTC). This clustering in time on one host is itself a strong signal that a single incident/attack chain is driving the anomalies, not random noise.
+
+### Chronological breakdown
+
+- **12:52:40–12:52:55 UTC (Anomalies 6 & 7, if_score 0.81–0.84):**
+  Bursts of `driver_loaded` events, a `registry_value_set` on the `System` hive, and `process_create` for `autochk.exe` (`/q /v *`) accessing `smss.exe`. This pattern is consistent with **early boot/session-manager activity** — could be legitimate startup, but the volume (323 events in one 10s window) is highly unusual and worth confirming against a normal baseline for this DC.
+
+- **12:53:30–12:53:40 UTC (Anomaly 4, if_score 0.899, 138 events):**
+  Heavy `dns_query` activity from **lsass.exe, dns.exe, svchost.exe**, plus repeated `process_access` into **lsass.exe**. Processes performing DNS queries is atypical, and repeated access to `lsass.exe` is a classic **credential-dumping indicator** (e.g., Mimikatz-style memory access).
+
+- **12:54:05–12:54:20 UTC (Anomalies 2 & 5, if_score 0.98 / 0.84, 97–108 events):**
+  `powershell.exe` created, immediately followed by **process_access into lsass.exe**, multiple `dns_query` calls, and repeated `network_connection` events from PowerShell. This is a **high-confidence indicator of credential access + C2/exfil activity via PowerShell** — the combination of PowerShell touching LSASS memory and then making outbound network/DNS calls strongly resembles a credential-dumping-and-exfiltration or beaconing pattern.
+
+- **12:54:40–12:54:50 UTC (Anomaly 8, if_score 0.728):**
+  Further isolated `process_access` events against `lsass.exe` — continued probing/access of LSASS after the PowerShell activity.
+
+- **12:56:55–12:57:10 UTC (Anomalies 1 & 3, if_score 0.95–1.00, 32 events each):**
+  Repeated `registry_value_set` / `registry_object_create_delete` operations tied to **`WMIADAP.EXE`** (WMI Performance Adapter). This could be legitimate WMI provider re-registration, but given the preceding LSASS/PowerShell activity, it warrants review as possible **persistence via WMI**.
+
+- **12:57:15–12:57:30 UTC (Anomalies 9 & 10, if_score ~0.71–0.72):**
+  Single `process_access` events into **`TrustedInstaller.exe`**, a highly privileged servicing process. Access to TrustedInstaller is unusual and often associated with **privilege escalation or tampering with protected system files/permissions**.
+
+### Pattern Assessment
+
+This is a **coherent attack-chain narrative**, not scattered noise:
+1. Boot/driver activity (12:52) →
+2. DNS/LSASS touching by system processes (12:53) →
+3. PowerShell spawned, accesses LSASS, makes network/DNS calls (12:54) →
+4. Repeated LSASS access continues (12:54:40) →
+5. WMI registry manipulation (12:56:55–12:57:10) →
+6. TrustedInstaller process access (12:57:15–12:57:30)
+
+The **repeated lsass.exe process_access events correlated with PowerShell network/DNS activity** is the most security-relevant finding — this sequence is consistent with **credential dumping followed by potential C2 communication**, possibly followed by **WMI-based persistence** and an attempt to interact with **TrustedInstaller** for elevated privileges.
+
+**Recommendation:**
+- Prioritize investigating the **12:54:05–12:54:20 UTC PowerShell → lsass.exe → network_connection** sequence as the core of the incident.
+- Pull full command-line arguments for the `powershell.exe` process (truncated in this context) and identify the destination IPs/domains from the `dns_query`/`network_connection` events.
+- Review the WMIADAP registry changes (12:56:55–12:57:10) for unauthorized WMI subscriptions (persistence).
+- Confirm whether the `TrustedInstaller.exe` access (12:57:15–12:57:30) was user/process-initiated or automated (e.g., Windows Update), given its proximity to the suspected credential-access activity.
+- Baseline the 12:52:40–12:52:55 driver-load burst against known-good boot sequences for this DC to rule out false positive.
+============================================================
 ```
 
 ## Ejecutar API
@@ -107,9 +176,9 @@ curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d 
 
 curl -X POST http://localhost:8000/query -H "Content-Type: application/json" -d "{\"question\":\"Did you detect any evidence of credential dumping or Active Directory database extraction? If so, summarize the activity?\"}"
 
-# Con HyDE
+# Sin HyDE
 {"answer":"Based on the provided log windows, I did **not** find direct evidence of credential dumping tools (e.g., `mimikatz`, `procdump`, `ntdsutil.exe`, `vssadmin.exe`, `esentutl.exe`) or Active Directory database extraction (no references to `ntds.dit`, `SYSTEM` hive backup, or shadow-copy creation of the AD database).\n\nHowever, one item is worth flagging for further review:\n\n- **win-dc-8537412.attackrange.local, 12:55:07–12:55:08 UTC:** Multiple Sysmon **process_access (EventID=10)** events show `lsass.exe` being accessed several times in quick succession, interleaved with accesses to `services.exe`, `svchost.exe`, and `csrss.exe`.\n  - `lsass.exe` is the process that holds credential material in memory, so *any* access to it warrants scrutiny — this is the same technique used by tools like Mimikatz or `procdump.exe -ma lsass.exe` to extract credentials.\n  - **Critical caveat:** The log lines in this context only show the **target** image (`lsass.exe`), not the **source/calling process** or the requested access mask (e.g., `0x1010` / `PROCESS_VM_READ` would be highly suspicious, whereas standard service-level access like `0x1000` is normal). Since Sysmon EventID 10 always logs routine, benign LSASS accesses from `services.exe`, `svchost.exe`, and other legitimate system processes (this happens constantly on any Windows host), **this pattern alone is not sufficient to confirm malicious credential dumping.**\n\n- The `C:\\Windows\\System32\\msdtc.exe` process creation at 12:55:07 is the standard Distributed Transaction Coordinator service and is not inherently suspicious in this context.\n\n- The bulk of Window 2 (422 events) is dominated by high-volume, routine Splunk Universal Forwarder activity (`splunk-admon.exe`, `splunk-netmon.exe`, `splunk-powershell.exe`, `splunk-regmon.exe`, `splunk-winprintmon.exe`, `btool.exe`) and Windows servicing stack (`TiWorker.exe`) noise — none of which relates to credential access.\n\n**Assessment:** No confirmed evidence of credential dumping or NTDS.dit extraction. The repeated `lsass.exe` process_access events on the domain controller are a normal artifact of Sysmon EventID 10 logging but should be validated against the **source process name and GrantedAccess mask**, which are not visible in this excerpt.\n\n**Recommendation:** Pull the full EventID 10 records for the 12:55:07–12:55:08 window on `win-dc-8537412.attackrange.local` and inspect the `SourceImage` and `GrantedAccess` fields for any non-standard process (e.g., `procdump.exe`, `rundll32.exe`, `taskmgr.exe`, or unsigned binaries) requesting access to `lsass.exe` with read/memory-dump permissions (commonly `0x1410`, `0x1010`, or `0x1fffff`).","query":"Did you detect any evidence of credential dumping or Active Directory database extraction? If so, summarize the activity?","chunks_retrieved":8,"chunks_used":3,"latency_ms":44988,"hyde_used":false,"hypothetical_doc":null,"sources":[{"window_id":"splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:55+00:00","host":"win-dc-8537412.attackrange.local","window_start":"2020-10-08T12:54:55+00:00","window_end":"2020-10-08T12:55:05+00:00","score":0.7416,"event_count":2},{"window_id":"splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:15+00:00","host":"win-dc-8537412.attackrange.local","window_start":"2020-10-08T12:55:15+00:00","window_end":"2020-10-08T12:55:25+00:00","score":0.7395,"event_count":422},{"window_id":"splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:00+00:00","host":"win-dc-8537412.attackrange.local","window_start":"2020-10-08T12:55:00+00:00","window_end":"2020-10-08T12:55:10+00:00","score":0.7389,"event_count":60}]}
 
-# Sin HyDE
+# Con HyDE
 {"answer":"## Yes — Strong Evidence of NTDS.dit Extraction (T1003.003)\n\n**Host:** win-dc-8537412.attackrange.local | **Time window:** 12:54:25–12:54:32 UTC\n\nThis activity shows a clear, multi-step Active Directory credential dumping attack via Volume Shadow Copy, consistent with the **Atomic Red Team T1003.003** technique (explicitly referenced in the logs).\n\n### Attack Sequence\n\n1. **Reconnaissance / Setup (12:54:25–26)**\n   - PowerShell launched with an encoded command that imports a module from `C:\\AtomicRedTeam\\invoke-atomicredteam\\Invoke-AtomicRedTeam...` — confirming this is an Atomic Red Team test execution.\n   - `whoami.exe` and `HOSTNAME.EXE` run to confirm host/user context.\n   - `reg query ... ProductOptions /v ProductType | findstr LanmanNT` executed twice — used to determine if the host is a Domain Controller (LanmanNT = DC check).\n\n2. **Precondition Checks (12:54:26)**\n   - `cmd.exe /c \"if not exist \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1 (exit /b 1)\"` — checking for existing shadow copies.\n   - Echo command referencing: *\"Run Invoke-AtomicTest T1003.003 -TestName 'Create Volume Shadow Copy with NTDS.dit'\"* — direct confirmation of the MITRE ATT&CK technique being simulated/executed.\n   - `if not exist C:\\Windows\\Temp (exit /b 1)` — staging directory check.\n\n3. **Shadow Copy Creation (12:54:29)**\n   - `vssadmin.exe create shadow /for=C:` — creates a Volume Shadow Copy of the C: drive, bypassing file locks on NTDS.dit.\n   - `VSSVC.exe` spawned to service the request; `spoolsv.exe` issued DNS queries around the same time (possibly incidental).\n\n4. **NTDS.dit and SYSTEM Hive Extraction (12:54:29)**\n   - Critical command:\n     ```\n     cmd.exe /c \"copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\NTDS\\NTDS.dit C:\\Windows\\Temp\\ntds.dit\n     & copy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SYSTEM C:\\Windows\\Temp\\VSC_SYSTEM_HIVE\n     & reg save HKLM\\SYSTEM C:\\Windows\\Temp\\SYSTEM_HIVE\"\n     ```\n   - This copies the **NTDS.dit database** (containing all AD user password hashes) and the **SYSTEM registry hive** (needed to decrypt the boot key/hashes) out of the shadow copy to `C:\\Windows\\Temp\\`.\n   - `reg.exe save HKLM\\SYSTEM C:\\Windows\\Temp\\SYSTEM_HIVE` — redundant SYSTEM hive save via the registry API.\n\n5. **NTDSUtil IFM Extraction (12:54:29)**\n   - `cmd.exe /c \"mkdir C:\\Windows\\Temp\\ntds_T1003 & ntdsutil \"ac i ntds\" \"ifm\" \"create full C:\\Windows\\Temp\\ntds_T1003\" q q\"`\n   - This is the classic **`ntdsutil` \"Install From Media\" (IFM)** method — creates a full copy of the AD database plus registry hives specifically for offline credential extraction (e.g., with tools like `secretsdump.py` or `DSInternals`).\n\n6. **Mass LSASS Access (12:54:29–12:54:32)**\n   - An extremely high volume of `process_access` events targeting **`lsass.exe`** occurs continuously through the end of the window — dozens of handle opens per second, sustained for ~3 seconds. This is highly anomalous and consistent with either:\n     - Credential dumping tools reading LSASS memory (e.g., Mimikatz-style access), or\n     - `ntdsutil`/`vssvc` legitimately interacting with LSASS during the IFM snapshot process — but the sheer volume warrants scrutiny.\n\n7. **Remote Execution Indicators**\n   - `WinrsHost.exe -Embedding` process creation followed by an encoded `powershell.exe` command indicates this activity may have been triggered remotely via **WinRM** (Windows Remote Management), suggesting the attacker/tester had remote administrative access to the DC.\n\n### IOCs Observed\n- `C:\\Windows\\Temp\\ntds.dit`\n- `C:\\Windows\\Temp\\VSC_SYSTEM_HIVE`\n- `C:\\Windows\\Temp\\SYSTEM_HIVE`\n- `C:\\Windows\\Temp\\ntds_T1003\\` (ntdsutil IFM output directory)\n- Command-line references to `Invoke-AtomicTest T1003.003`\n\n### Assessment\nThis is a textbook **NTDS.dit dumping** operation using **two parallel methods** (manual VSS copy + `ntdsutil` IFM) — both designed to exfiltrate the entire Active Directory credential database from a Domain Controller. Combined with the `AtomicRedTeam` module reference, this strongly suggests either an authorized adversary-emulation/red-team exercise or an actual attacker leveraging the same technique.\n\n**Recommendation:**\n- Immediately verify whether this was an authorized red-team/Atomic Red Team test.\n- If not authorized, treat as critical incident: isolate the DC, rotate **all domain credentials** (especially krbtgt), and forensically image `C:\\Windows\\Temp\\ntds.dit`, `SYSTEM_HIVE`, and the `ntds_T1003` folder before remediation.\n- Review W","query":"Did you detect any evidence of credential dumping or Active Directory database extraction? If so, summarize the activity?","chunks_retrieved":8,"chunks_used":1,"latency_ms":36439,"hyde_used":true,"hypothetical_doc":"Host: DC01-CORP | Window: 03:14:02–03:16:47 UTC\n[03:14:02] Sysmon EID1 | ProcessCreate | Image=C:\\Windows\\System32\\cmd.exe | CommandLine=\"cmd.exe /c vssadmin create shadow /for=C:\" | User=CORP\\svc_backup | ParentImage=powershell.exe\n[03:14:09] Sysmon EID1 | ProcessCreate | Image=C:\\Windows\\System32\\vssadmin.exe | CommandLine=\"vssadmin create shadow /for=C:\" | User=CORP\\svc_backup\n[03:14:22] Windows-Security EID4688 | NewProcess=ntdsutil.exe | CommandLine=\"ntdsutil.exe \\\"ac i ntds\\\" \\\"ifm\\\" \\\"create full C:\\Temp\\ntdsdump\\\" q q\" | User=CORP\\svc_backup\n[03:14:58] Sysmon EID11 | FileCreate | TargetFilename=C:\\Temp\\ntdsdump\\Active Directory\\ntds.dit | Image=ntdsutil.exe\n[03:15:10] Sysmon EID11 | FileCreate | TargetFilename=C:\\Temp\\ntdsdump\\registry\\SYSTEM | Image=ntdsutil.exe\n[03:15:44] Sysmon EID3 | NetworkConnect | SourceIP=10.10.5.15 | DestIP=198.51.100.22 | DestPort=445 | Image=svchost.exe | User=CORP\\svc_backup\n[03:16:12] Sysmon EID11 | FileCreate | TargetFilename=C:\\Windows\\Temp\\ntds_exfil.7z | Image=7z.exe | User=CORP\\svc_backup\n[03:16:47] Windows-Security EID4663 | ObjectAccess | Object=C:\\Temp\\ntdsdump\\Active Directory\\ntds.dit | AccessMask=DELETE | User=CORP\\svc_backup","sources":[{"window_id":"splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:25+00:00","host":"win-dc-8537412.attackrange.local","window_start":"2020-10-08T12:54:25+00:00","window_end":"2020-10-08T12:54:35+00:00","score":0.9112,"event_count":906}]}
 ```

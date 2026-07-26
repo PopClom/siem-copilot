@@ -9,6 +9,10 @@ torch>=2.0          # CPU build is fine; GPU users replace with the CUDA wheel
 # Vector store
 qdrant-client>=1.9
 
+# Machine learning
+hdbscan
+scikit-learn
+
 # LLM integration
 anthropic>=0.25
 

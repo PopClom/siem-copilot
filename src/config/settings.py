@@ -153,6 +153,19 @@ class SourceConfig(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Anomaly detection config
+# ---------------------------------------------------------------------------
+
+class AnomalyConfig(BaseModel):
+    contamination: float = Field(0.05, alias="contamination")
+    isolation_threshold: float = Field(0.6, alias="isolation-threshold")
+    min_cluster_size: int = Field(5, alias="min-cluster-size")
+    include_noise_as_anomaly: bool = Field(True, alias="include-noise-as-anomaly")
+
+    model_config = {"populate_by_name": True}
+
+
+# ---------------------------------------------------------------------------
 # RAG config
 # ---------------------------------------------------------------------------
 
@@ -174,6 +187,7 @@ class Settings(BaseModel):
     llm: LLMConfig
     grouping: GroupingConfig = GroupingConfig()
     rag: RagConfig = Field(default_factory=RagConfig)
+    anomaly: AnomalyConfig = Field(default_factory=AnomalyConfig)
     sources: list[SourceConfig] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}

@@ -25,6 +25,12 @@ grouping:
   time-window: 10s
   max-events-per-chunk: 1000
 
+anomaly:
+  contamination: 0.05             # expected fraction of anomalous windows
+  isolation-threshold: 0.6        # minimum IF score to flag a window (0–1)
+  min-cluster-size: 5             # HDBSCAN minimum points to form a cluster
+  include-noise-as-anomaly: true  # treat HDBSCAN noise points as anomalies
+
 sources:
   - name: splunk_attack_sysmon
     enabled: true

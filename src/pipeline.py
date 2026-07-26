@@ -37,19 +37,17 @@ class IngestionPipeline:
     Parameters
     ----------
     settings:    validated config object
-    overlap:     whether to use 50 % overlapping windows (default True)
     dry_run:     if True, skip embedding and vector store upsert
+    reingest:     if True, drop and recreate vector DB collection
     """
 
     def __init__(
         self,
         settings: Settings,
-        overlap: bool = True,
         dry_run: bool = False,
         reingest: bool = False,
     ) -> None:
         self.settings = settings
-        self.overlap = overlap
         self.dry_run = dry_run
         self.reingest = reingest
 

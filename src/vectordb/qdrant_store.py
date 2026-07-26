@@ -18,7 +18,11 @@ Dependencies
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from datetime import timedelta
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from src.anomaly.detector import WindowAnomaly
 
 from src.config.settings import VectorDBConfig
 from src.models import EventWindow
@@ -81,7 +85,7 @@ class QdrantStore:
 
     def ensure_collection(self, dimension: int) -> None:
         """Create the collection if it does not already exist."""
-        from qdrant_client.models import Distance, VectorParams, PayloadSchemaType
+        from qdrant_client.models import Distance, VectorParams
 
         existing = {c.name for c in self.client.get_collections().collections}
 
@@ -140,6 +144,92 @@ class QdrantStore:
         )
         logger.info("Upserted %d points into '%s'.", len(points), self.config.collection)
         return len(points)
+
+    # ------------------------------------------------------------------
+    # Anomaly detection support
+    # ------------------------------------------------------------------
+
+    def fetch_all(
+        self,
+        since: Optional["timedelta"] = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Fetch all points (vector + payload) from the collection.
+        Optionally filters to windows newer than `since` (a timedelta).
+        Uses Qdrant's scroll API to page through large collections.
+        """
+        from datetime import datetime, timezone
+
+        logger.info("Scrolling all points from '%s' …", self.config.collection)
+
+        points: list[dict[str, Any]] = []
+        offset = None
+
+        while True:
+            batch, next_offset = self.client.scroll(
+                collection_name=self.config.collection,
+                limit=256,
+                offset=offset,
+                with_payload=True,
+                with_vectors=True,
+            )
+
+            for point in batch:
+                payload = point.payload or {}
+
+                # Time filter
+                if since is not None:
+                    ws = payload.get("window_start")
+                    if ws:
+                        try:
+                            window_dt = datetime.fromisoformat(ws)
+                            if window_dt.tzinfo is None:
+                                window_dt = window_dt.replace(tzinfo=timezone.utc)
+                            cutoff = datetime.now(timezone.utc) - since
+                            if window_dt < cutoff:
+                                continue
+                        except ValueError:
+                            pass
+
+                points.append({
+                    "id":      point.id,
+                    "vector":  point.vector,
+                    "payload": payload,
+                })
+
+            if next_offset is None:
+                break
+            offset = next_offset
+
+        logger.info("Fetched %d points from Qdrant.", len(points))
+        return points
+
+    def update_anomaly_scores(self, windows: "list[WindowAnomaly]") -> None:
+        """
+        Write anomaly scores back to the payload of each point.
+        Uses set_payload so existing payload fields are preserved.
+        """
+        from qdrant_client.models import PointIdsList
+
+        logger.info("Writing anomaly scores for %d windows …", len(windows))
+
+        # Batch updates in groups of 256 to avoid large single requests
+        batch_size = 256
+        for i in range(0, len(windows), batch_size):
+            batch = windows[i : i + batch_size]
+            for w in batch:
+                self.client.set_payload(
+                    collection_name=self.config.collection,
+                    payload={
+                        "isolation_score": round(w.isolation_score, 6),
+                        "cluster_id":      w.cluster_id,
+                        "is_anomaly":      w.is_anomaly,
+                        "anomaly_label":   w.anomaly_label,
+                    },
+                    points=PointIdsList(points=[w.point_id]),
+                )
+
+        logger.info("Anomaly scores written.")
 
     # ------------------------------------------------------------------
     # Search

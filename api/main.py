@@ -27,7 +27,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import health, query
+from api.routers import anomalies, health, query
 from src.config.settings import load_settings
 from src.rag.chain import RAGChain
 
@@ -122,6 +122,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(query.router)
+    app.include_router(anomalies.router)
 
     return app
 
