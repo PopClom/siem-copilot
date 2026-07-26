@@ -156,11 +156,33 @@ class QdrantStore:
         """
         Fetch all points (vector + payload) from the collection.
         Optionally filters to windows newer than `since` (a timedelta).
+        The time filter is applied server-side by Qdrant for efficiency.
         Uses Qdrant's scroll API to page through large collections.
+
+        Note: requires a datetime payload index on 'window_start' for the
+        filter to be fast.  Create it once after first ingestion with:
+            store.create_datetime_index("window_start")
+        Without the index Qdrant still works but does a full scan.
         """
         from datetime import datetime, timezone
+        from qdrant_client.models import DatetimeRange, FieldCondition, Filter
 
         logger.info("Scrolling all points from '%s' …", self.config.collection)
+
+        qdrant_filter = None
+        if since is not None:
+            cutoff = datetime.now(timezone.utc) - since
+            qdrant_filter = Filter(
+                must=[
+                    FieldCondition(
+                        key="window_start",
+                        range=DatetimeRange(gte=cutoff),
+                    )
+                ]
+            )
+            logger.info(
+                "Server-side filter: window_start >= %s", cutoff.isoformat()
+            )
 
         points: list[dict[str, Any]] = []
         offset = None
@@ -172,29 +194,14 @@ class QdrantStore:
                 offset=offset,
                 with_payload=True,
                 with_vectors=True,
+                scroll_filter=qdrant_filter,
             )
 
             for point in batch:
-                payload = point.payload or {}
-
-                # Time filter
-                if since is not None:
-                    ws = payload.get("window_start")
-                    if ws:
-                        try:
-                            window_dt = datetime.fromisoformat(ws)
-                            if window_dt.tzinfo is None:
-                                window_dt = window_dt.replace(tzinfo=timezone.utc)
-                            cutoff = datetime.now(timezone.utc) - since
-                            if window_dt < cutoff:
-                                continue
-                        except ValueError:
-                            pass
-
                 points.append({
                     "id":      point.id,
                     "vector":  point.vector,
-                    "payload": payload,
+                    "payload": point.payload or {},
                 })
 
             if next_offset is None:
@@ -203,6 +210,20 @@ class QdrantStore:
 
         logger.info("Fetched %d points from Qdrant.", len(points))
         return points
+
+    def create_datetime_index(self, field: str = "window_start") -> None:
+        """
+        Create a payload index on a datetime field so range filters are fast.
+        Safe to call multiple times — Qdrant ignores duplicate index creation.
+        """
+        from qdrant_client.models import PayloadSchemaType
+
+        self.client.create_payload_index(
+            collection_name=self.config.collection,
+            field_name=field,
+            field_schema=PayloadSchemaType.DATETIME,
+        )
+        logger.info("Datetime index created on field '%s'.", field)
 
     def update_anomaly_scores(self, windows: "list[WindowAnomaly]") -> None:
         """

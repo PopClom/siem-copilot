@@ -148,8 +148,7 @@ class RAGChain:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    # Approximate token budget for context (conservative; BGE chunks are ~200 tokens each)
-    _MAX_CHUNKS = 6
+    _MAX_CHUNKS = 30
     _MAX_CHARS  = 100_000  # ~25 000 tokens at 4 chars/token
 
     def _select_chunks(self, chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:

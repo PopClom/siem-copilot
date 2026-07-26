@@ -132,6 +132,7 @@ class IngestionPipeline:
 
         # 4. Ensure collection exists (first call creates it)
         self.store.ensure_collection(dimension=self.embedder.dimension)
+        self.store.create_datetime_index("window_start")
 
         # 5. Upsert
         upserted = self.store.upsert(windows, vectors)

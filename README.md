@@ -92,6 +92,7 @@ python main.py --reingest
 
 # Anomaly detection
 python main.py --detect-anomalies
+python main.py --detect-anomalies --since 24h --no-llm-summary # Dry run
 
 ============================================================
   Anomaly Detection Results

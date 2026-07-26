@@ -66,9 +66,9 @@ def _format_window(idx: int, w: WindowAnomaly) -> str:
     )
 
     # Truncate long windows so we don't blow the context budget
-    text = w.aggregated_text[:800]
-    if len(w.aggregated_text) > 800:
-        text += f"\n… [{len(w.aggregated_text) - 800} chars truncated]"
+    text = w.aggregated_text[:5000]
+    if len(w.aggregated_text) > 5000:
+        text += f"\n… [{len(w.aggregated_text) - 5000} chars truncated]"
 
     return f"{header}\n{text}"
 
