@@ -312,11 +312,13 @@ class Retriever:
                     )
 
         if neighbours:
+            # Sort neighbours chronologically so the LLM reads them in timeline order
+            neighbours.sort(key=lambda c: c.window_start)
             logger.info(
                 "Context expansion: added %d neighbour window(s).", len(neighbours)
             )
 
-        # Retrieved chunks first (ranked by similarity), neighbours appended after
+        # Retrieved chunks first (ranked by similarity), neighbours appended after in time order
         return chunks + neighbours
 
     def _embed_query(self, query: str) -> list[float]:
