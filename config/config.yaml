@@ -1,7 +1,7 @@
 embedding:
   model: BAAI/bge-small-en-v1.5
   device: cpu
-  batch-size: 512
+  batch-size: 1024
 
 vector-db:
   type: qdrant
@@ -27,10 +27,10 @@ grouping:
   max-events-per-chunk: 100
 
 anomaly:
-  contamination: 0.05              # expected fraction of anomalous windows
-  isolation-threshold: 0.8         # minimum IF score to flag a window (0–1)
+  contamination: 0.10              # expected fraction of anomalous windows
+  isolation-threshold: 0.7         # minimum IF score to flag a window (0–1)
   min-cluster-size: 5              # HDBSCAN minimum points to form a cluster
-  include-noise-as-anomaly: false  # treat HDBSCAN noise points as anomalies
+  include-noise-as-anomaly: true   # treat HDBSCAN noise points as anomalies
 
 sources:
   - name: splunk_attack_sysmon
@@ -38,7 +38,7 @@ sources:
     type: file
     input-format: raw-sysmon-log
     semantic-type: windows-sysmon
-    path: ./datasets/splunk_attack_data/sysmon/
+    path: ./datasets/splunk_attack_data/sysmon/sanitized/
     recursive: true
     file-patterns:
       - "*.log"

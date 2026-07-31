@@ -30,11 +30,7 @@ async def query(request: Request, body: QueryRequest) -> QueryResponse:
     chain = request.app.state.chain
 
     try:
-        result = chain.query(
-            question=body.question,
-            top_k=body.top_k,
-            filters=body.filters,
-        )
+        result = chain.query(question=body.question)
     except Exception as exc:
         logger.exception("RAG chain error: %s", exc)
         raise HTTPException(status_code=500, detail=f"RAG pipeline error: {exc}") from exc
@@ -42,11 +38,14 @@ async def query(request: Request, body: QueryRequest) -> QueryResponse:
     return QueryResponse(
         answer=result.answer,
         query=result.query,
+        tool_used=result.tool_used,
         chunks_retrieved=result.chunks_retrieved,
         chunks_used=result.chunks_used,
         neighbours_added=result.neighbours_added,
-        latency_ms=result.latency_ms,
         hyde_used=result.hyde_used,
         hypothetical_doc=result.hypothetical_doc,
+        latency_ms=result.latency_ms,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
         sources=result.sources,
     )

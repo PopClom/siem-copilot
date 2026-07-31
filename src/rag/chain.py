@@ -1,12 +1,25 @@
 """
 rag/chain.py
 ------------
-Orchestrates the full RAG pipeline:
-    1. Retrieve relevant chunks from Qdrant
-    2. Build the prompt (system + context + question)
-    3. Call the LLM and return a structured response
+Orchestrates the full query flow using Anthropic tool use.
 
-This is the only class the API layer needs to import from the rag package.
+The LLM receives two tool definitions and decides which to call:
+
+  semantic_search(query, top_k?, filters?)
+      → embeds the query, retrieves relevant windows from Qdrant,
+        returns the formatted context block
+
+  detect_anomalies(since?, question?)
+      → runs Isolation Forest + HDBSCAN over stored vectors,
+        returns the formatted anomaly context block
+
+If the LLM decides neither tool is needed (e.g. a greeting or a question
+it can answer from general knowledge), it responds directly.
+
+Turn structure
+--------------
+  Turn 1 — user question + tool definitions → LLM picks a tool or answers
+  Turn 2 — tool result → LLM produces final natural-language answer
 """
 
 from __future__ import annotations
@@ -14,10 +27,10 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 from src.config.settings import Settings
-from src.rag.llm import LLMClient
+from src.rag.llm import LLMClient, ToolUseResponse
 from src.rag.prompt import SYSTEM_PROMPT, build_messages, format_context
 from src.rag.retriever import RetrievedChunk, Retriever
 
@@ -32,13 +45,77 @@ logger = logging.getLogger(__name__)
 class RAGResponse:
     answer: str
     query: str
-    chunks_retrieved: int
-    chunks_used: int
-    latency_ms: int
+    tool_used: Optional[str]       # "semantic_search" | "detect_anomalies" | None
+    chunks_retrieved: int = 0
+    chunks_used: int = 0
+    neighbours_added: int = 0
     hyde_used: bool = False
     hypothetical_doc: Optional[str] = None
-    neighbours_added: int = 0
+    latency_ms: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
     sources: list[dict] = field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Tool definitions (Anthropic schema)
+# ---------------------------------------------------------------------------
+
+TOOLS = [
+    {
+        "name": "semantic_search",
+        "description": (
+            "Search the security log database for windows relevant to the analyst's question. "
+            "Use this for any question about specific events, hosts, users, processes, "
+            "network connections, file activity, or attack techniques observed in the logs."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query derived from the analyst's question.",
+                },
+                "top_k": {
+                    "type": "integer",
+                    "description": "Number of log windows to retrieve (default 8).",
+                    "default": 8,
+                },
+                "filters": {
+                    "type": "object",
+                    "description": (
+                        "Optional exact-match metadata filters, e.g. "
+                        "{\"host\": \"srv-01\"}. Omit if no specific host/user filter is needed."
+                    ),
+                    "additionalProperties": {"type": "string"},
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "detect_anomalies",
+        "description": (
+            "Run unsupervised anomaly detection (Isolation Forest + HDBSCAN) over the stored "
+            "log windows and return the anomalous ones. "
+            "Use this when the analyst asks about anomalies, unusual activity, outliers, "
+            "or behavioural deviations — not for questions about specific known attack techniques."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "since": {
+                    "type": "string",
+                    "description": (
+                        "Only analyse windows newer than this duration. "
+                        "Examples: '24h', '7d', '30m'. Omit to analyse all windows."
+                    ),
+                },
+            },
+            "required": [],
+        },
+    },
+]
 
 
 # ---------------------------------------------------------------------------
@@ -47,16 +124,16 @@ class RAGResponse:
 
 class RAGChain:
     """
-    Single entry point for the RAG query flow.
-
-    Usage
-    -----
-        chain = RAGChain(settings)
-        response = chain.query("Were there any PowerShell download cradles?")
+    Single entry point for all analyst queries.
+    The LLM decides whether to call semantic_search, detect_anomalies, or
+    answer directly from general knowledge.
     """
+
+    _MAX_CHARS = 100_000  # ~25 000 tokens at 4 chars/token
 
     def __init__(self, settings: Settings) -> None:
         rag_cfg = settings.rag
+        self._settings = settings
         self._retriever = Retriever(
             embedding_config=settings.embedding,
             vectordb_config=settings.vector_db,
@@ -68,99 +145,163 @@ class RAGChain:
             config=settings.llm,
             system=SYSTEM_PROMPT,
         )
-        self._use_hyde: bool = settings.rag.use_hyde if settings.rag else False
+        self._use_hyde: bool = rag_cfg.use_hyde
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def query(
-        self,
-        question: str,
-        top_k: int = 8,
-        filters: Optional[dict] = None,
-    ) -> RAGResponse:
+    def query(self, question: str) -> RAGResponse:
         """
-        Run the full RAG pipeline for a natural-language question.
-
-        Parameters
-        ----------
-        question: analyst's natural-language query
-        top_k:    number of chunks to retrieve before passing to LLM
-        filters:  optional Qdrant metadata filters {"host": "srv-01", ...}
+        Answer an analyst's natural-language question using tool use.
+        The LLM picks the right tool (or answers directly).
         """
         t0 = time.monotonic()
-        hypothetical_doc: Optional[str] = None
 
-        # 1. Retrieve
-        if self._use_hyde:
-            logger.info("Using HyDE retrieval for query: %r", question)
-            chunks, hypothetical_doc = self._retriever.retrieve_with_hyde(
-                query=question,
-                llm=self._llm,
-                top_k=top_k,
-                filters=filters,
-            )
-        else:
-            chunks = self._retriever.retrieve(question, top_k=top_k, filters=filters)
-        chunks_retrieved = sum(1 for c in chunks if not c.is_neighbour)
-        neighbours_added = len(chunks) - chunks_retrieved
-        if neighbours_added:
-            logger.info("Context expansion added %d neighbour window(s).", neighbours_added)
+        messages = [{"role": "user", "content": question}]
 
-        # 2. Optionally truncate to avoid exceeding context window
-        chunks_used_list = self._select_chunks(chunks)
-        chunks_used = len(chunks_used_list)
-
-        # 3. Build prompt
-        if chunks_used_list:
-            logger.debug("Chunks passed to LLM:")
-            for i, c in enumerate(chunks_used_list, 1):
-                logger.debug(
-                    "  [%d] score=%.4f host=%s %s–%s\n      %s",
-                    i, c.score, c.host,
-                    c.window_start[11:19], c.window_end[11:19],
-                    c.aggregated_text[:120].replace("\n", " ↵ "),
-                )
-        else:
-            logger.debug("No chunks passed to LLM — context will be empty.")
-
-        messages = build_messages(question, chunks_used_list)
-
-        # 4. Call LLM
-        if chunks_used == 0:
-            logger.info("No relevant chunks found; asking LLM to say so.")
-        answer = self._llm.complete(messages)
+        llm_response: ToolUseResponse = self._llm.complete_with_tools(
+            messages=messages,
+            tools=TOOLS,
+            tool_executor=self._execute_tool,
+        )
 
         latency_ms = int((time.monotonic() - t0) * 1000)
         logger.info(
-            "RAG query complete | chunks=%d/%d | latency=%dms",
-            chunks_used, chunks_retrieved, latency_ms,
+            "Query complete | tool=%s | latency=%dms | tokens=%d+%d",
+            llm_response.tool_name, latency_ms,
+            llm_response.input_tokens, llm_response.output_tokens,
         )
+
+        # Pull retrieval metadata from tool_result if semantic_search was called
+        meta = llm_response.tool_result or {}
 
         return RAGResponse(
-            answer=answer,
+            answer=llm_response.answer,
             query=question,
-            chunks_retrieved=chunks_retrieved,
-            chunks_used=chunks_used,
+            tool_used=llm_response.tool_name,
+            chunks_retrieved=meta.get("chunks_retrieved", 0),
+            chunks_used=meta.get("chunks_used", 0),
+            neighbours_added=meta.get("neighbours_added", 0),
+            hyde_used=meta.get("hyde_used", False),
+            hypothetical_doc=meta.get("hypothetical_doc"),
             latency_ms=latency_ms,
-            hyde_used=self._use_hyde,
-            hypothetical_doc=hypothetical_doc,
-            neighbours_added=neighbours_added,
-            sources=self._format_sources(chunks_used_list),
+            input_tokens=llm_response.input_tokens,
+            output_tokens=llm_response.output_tokens,
+            sources=meta.get("sources", []),
         )
 
     # ------------------------------------------------------------------
-    # Internal helpers
+    # Tool executor — called by LLMClient when LLM picks a tool
     # ------------------------------------------------------------------
 
-    _MAX_CHARS  = 100_000  # ~25 000 tokens at 4 chars/token
+    def _execute_tool(self, tool_name: str, tool_input: dict) -> Any:
+        """
+        Dispatch to the right implementation based on tool_name.
+        Returns a JSON-serialisable dict that gets sent back to the LLM
+        as a tool_result.
+        """
+        if tool_name == "semantic_search":
+            return self._run_semantic_search(tool_input)
+        elif tool_name == "detect_anomalies":
+            return self._run_anomaly_detection(tool_input)
+        else:
+            logger.warning("Unknown tool requested: %s", tool_name)
+            return {"error": f"Unknown tool: {tool_name}"}
+
+    # ------------------------------------------------------------------
+    # Tool implementations
+    # ------------------------------------------------------------------
+
+    def _run_semantic_search(self, tool_input: dict) -> dict:
+        """
+        Execute the semantic_search tool:
+          embed → retrieve → (HyDE?) → expand → select → format context
+        Returns a dict with the context text + metadata for the LLM.
+        """
+        query   = tool_input.get("query", "")
+        top_k   = tool_input.get("top_k", self._retriever.top_k)
+        filters = tool_input.get("filters") or None
+
+        hypothetical_doc: Optional[str] = None
+
+        if self._use_hyde:
+            logger.info("Using HyDE for semantic_search")
+            chunks, hypothetical_doc = self._retriever.retrieve_with_hyde(
+                query=query, llm=self._llm, top_k=top_k, filters=filters,
+            )
+        else:
+            chunks = self._retriever.retrieve(query, top_k=top_k, filters=filters)
+
+        chunks_retrieved  = sum(1 for c in chunks if not c.is_neighbour)
+        neighbours_added  = len(chunks) - chunks_retrieved
+        chunks_used_list  = self._select_chunks(chunks)
+        chunks_used       = len(chunks_used_list)
+
+        # Format context exactly as before — the LLM reads this as tool_result
+        context_text = format_context(chunks_used_list)
+
+        logger.info(
+            "semantic_search: retrieved=%d used=%d neighbours=%d",
+            chunks_retrieved, chunks_used, neighbours_added,
+        )
+
+        return {
+            "context":          context_text,
+            "chunks_retrieved": chunks_retrieved,
+            "chunks_used":      chunks_used,
+            "neighbours_added": neighbours_added,
+            "hyde_used":        self._use_hyde,
+            "hypothetical_doc": hypothetical_doc,
+            "sources":          self._format_sources(chunks_used_list),
+        }
+
+    def _run_anomaly_detection(self, tool_input: dict) -> dict:
+        """
+        Execute the detect_anomalies tool:
+          fetch vectors → IF + HDBSCAN → format anomaly context
+        Returns a dict with the anomaly context text + stats for the LLM.
+        """
+        from src.anomaly.chain import AnomalyChain, parse_since
+        from src.anomaly.reporter import build_anomaly_context
+
+        since_str = tool_input.get("since")
+        since_td  = parse_since(since_str) if since_str else None
+
+        logger.info("detect_anomalies tool called (since=%s)", since_str or "all")
+
+        # Run detection without LLM summary — the LLM in this conversation
+        # will synthesise the summary itself from the context we return
+        chain = AnomalyChain(
+            settings=self._settings,
+            since=since_td,
+            with_summary=False,
+        )
+        response = chain.run()
+        result   = response.result
+
+        context_text = build_anomaly_context(result)
+
+        logger.info(
+            "detect_anomalies: total=%d anomalous=%d clusters=%d",
+            result.total_windows, result.n_anomalies, result.n_clusters,
+        )
+
+        return {
+            "context":        context_text,
+            "total_windows":  result.total_windows,
+            "n_anomalies":    result.n_anomalies,
+            "anomaly_ratio":  round(result.anomaly_ratio, 4),
+            "n_clusters":     result.n_clusters,
+            "noise_ratio":    round(result.noise_ratio, 4),
+            "run_timestamp":  result.run_timestamp,
+        }
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
 
     def _select_chunks(self, chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
-        """
-        Select chunks that fit within the context character budget.
-        Chunks are ordered: retrieved (by relevance score) first, neighbours after.
-        """
         selected: list[RetrievedChunk] = []
         total_chars = 0
 
@@ -193,6 +334,7 @@ class RAGChain:
                 "window_end":   chunk.window_end,
                 "score":        round(chunk.score, 4),
                 "event_count":  chunk.event_count,
+                "is_neighbour": chunk.is_neighbour,
             }
             for chunk in chunks
         ]

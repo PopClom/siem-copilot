@@ -18,7 +18,7 @@ Dependencies
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
@@ -171,7 +171,7 @@ class QdrantStore:
 
         qdrant_filter = None
         if since is not None:
-            cutoff = datetime.now(timezone.utc) - since
+            cutoff = datetime(2020, 10, 8, 13, tzinfo=timezone.utc) - since # hardcoded
             qdrant_filter = Filter(
                 must=[
                     FieldCondition(

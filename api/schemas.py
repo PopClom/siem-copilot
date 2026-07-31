@@ -22,20 +22,6 @@ class QueryRequest(BaseModel):
         max_length=1000,
         examples=["Were there any lateral movement indicators in the last hour?"],
     )
-    top_k: int = Field(
-        default=8,
-        ge=1,
-        le=20,
-        description="Number of log windows to retrieve before sending to the LLM.",
-    )
-    filters: Optional[dict[str, str]] = Field(
-        default=None,
-        description=(
-            "Optional metadata filters applied before vector search. "
-            "Keys must match Qdrant payload fields, e.g. {\"host\": \"srv-01\"}."
-        ),
-        examples=[{"host": "srv-01"}],
-    )
 
 
 class SourceReference(BaseModel):
@@ -50,12 +36,16 @@ class SourceReference(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     query: str
-    chunks_retrieved: int
-    chunks_used: int
-    neighbours_added: int
-    latency_ms: int
-    hyde_used: bool
-    hypothetical_doc: Optional[str] = Field(default=None)
+    tool_used: Optional[str] = None
+    chunks_retrieved: int = 0
+    chunks_used: int = 0
+    neighbours_added: int = 0
+    hyde_used: bool = False
+    hypothetical_doc: Optional[str] = None
+    latency_ms: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    sources: list[SourceReference] = Field(default_factory=list)
     sources: list[SourceReference]
 
 
