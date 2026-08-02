@@ -38,6 +38,23 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _build_messages(question: str, history: list[dict] | None) -> list[dict]:
+    """
+    Build the messages list for the API call.
+    History entries are {"role": "user"|"assistant", "content": str}.
+    The current question is appended as the final user turn.
+    """
+    messages: list[dict] = []
+    for turn in (history or []):
+        messages.append({"role": turn["role"], "content": turn["content"]})
+    messages.append({"role": "user", "content": question})
+    return messages
+
+
+# ---------------------------------------------------------------------------
 # Response type
 # ---------------------------------------------------------------------------
 
@@ -151,14 +168,20 @@ class RAGChain:
     # Public API
     # ------------------------------------------------------------------
 
-    def query(self, question: str) -> RAGResponse:
+    def query(self, question: str, history: list[dict] | None = None) -> RAGResponse:
         """
         Answer an analyst's natural-language question using tool use.
         The LLM picks the right tool (or answers directly).
+
+        Parameters
+        ----------
+        question:  the analyst's question
+        history:   optional conversation history as list of
+                   {"role": "user"|"assistant", "content": str} dicts
         """
         t0 = time.monotonic()
 
-        messages = [{"role": "user", "content": question}]
+        messages = _build_messages(question, history)
 
         llm_response: ToolUseResponse = self._llm.complete_with_tools(
             messages=messages,
@@ -189,6 +212,22 @@ class RAGChain:
             input_tokens=llm_response.input_tokens,
             output_tokens=llm_response.output_tokens,
             sources=meta.get("sources", []),
+        )
+
+    def query_stream(
+        self,
+        question: str,
+        history: list[dict] | None = None,
+    ):
+        """
+        Streaming variant of query().
+        Yields str tokens from stream_with_tools() — caller wraps in SSE.
+        """
+        messages = _build_messages(question, history)
+        yield from self._llm.stream_with_tools(
+            messages=messages,
+            tools=TOOLS,
+            tool_executor=self._execute_tool,
         )
 
     # ------------------------------------------------------------------

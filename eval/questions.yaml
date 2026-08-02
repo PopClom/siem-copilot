@@ -1,0 +1,53 @@
+# eval/questions.yaml
+# -------------------
+# Ground truth for the SIEM Copilot evaluation.
+#
+# How to find relevant_window_ids:
+#   Run the system once, note the window_ids returned in the API response
+#   (field: sources[].window_id), inspect the aggregated_text of each,
+#   and mark the ones that genuinely answer the question.
+#
+# Format of window_id:  "<source_name>|<host>|<user>|<window_start_iso>"
+# You can also find them by querying:
+#   GET http://localhost:8000/query  and reading response.sources[].window_id
+
+questions:
+
+  - id: q1
+    question: "Were there any PowerShell execution events with encoded commands?"
+    expected_tool: semantic_search
+    relevant_window_ids:
+      # Fill these in after a first manual run — copy from response.sources[].window_id
+      - "REPLACE_WITH_REAL_WINDOW_ID_1"
+      - "REPLACE_WITH_REAL_WINDOW_ID_2"
+    notes: "Should retrieve windows containing powershell.exe with -enc or -EncodedCommand"
+
+  - id: q2
+    question: "Was there any lateral movement via SMB or remote service creation?"
+    expected_tool: semantic_search
+    relevant_window_ids:
+      - "REPLACE_WITH_REAL_WINDOW_ID_3"
+      - "REPLACE_WITH_REAL_WINDOW_ID_4"
+    notes: "Should retrieve net.exe, sc.exe, or PsExec activity"
+
+  - id: q3
+    question: "Were there any process injection or memory tampering events?"
+    expected_tool: semantic_search
+    relevant_window_ids:
+      - "REPLACE_WITH_REAL_WINDOW_ID_5"
+    notes: "Should retrieve CreateRemoteThread, VirtualAllocEx, or Sysmon EventID 8/10"
+
+  - id: q4
+    question: "Were there anomalies or outliers in the dataset?"
+    expected_tool: detect_anomalies
+    relevant_window_ids: []
+    notes: >
+      Anomaly detection — no window-level ground truth.
+      Evaluated on tool routing correctness only.
+
+  - id: q5
+    question: "Were there any DNS queries to suspicious or unusual domains?"
+    expected_tool: semantic_search
+    relevant_window_ids:
+      - "REPLACE_WITH_REAL_WINDOW_ID_6"
+    notes: "Should retrieve Sysmon EventID 22 (DNS query) events"

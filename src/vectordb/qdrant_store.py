@@ -281,6 +281,7 @@ class QdrantStore:
             ]
             qdrant_filter = Filter(must=conditions)
 
+        logger.debug("semantic_search: requesting top_k=%d from Qdrant", top_k)
         hits = self.client.query_points(
             collection_name=self.config.collection,
             query=query_vector,

@@ -1,7 +1,7 @@
 embedding:
   model: BAAI/bge-small-en-v1.5
   device: cpu
-  batch-size: 1024
+  batch-size: 512
 
 vector-db:
   type: qdrant
@@ -16,8 +16,8 @@ llm:
 
 rag:
   use-hyde: true
-  expand-context: true
-  top-k: 8
+  expand-context: false
+  top-k: 15
   score-threshold: 0.30
 
 grouping:
@@ -38,10 +38,10 @@ sources:
     type: file
     input-format: raw-sysmon-log
     semantic-type: windows-sysmon
-    path: ./datasets/splunk_attack_data/sysmon/sanitized/
+    path: ./datasets/splunk_attack_data/sysmon/
     recursive: true
     file-patterns:
-      - "*.log"
+      - "*sanitized.log"
 
   - name: windows_security_dataset
     enabled: false

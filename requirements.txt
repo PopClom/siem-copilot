@@ -19,6 +19,7 @@ anthropic>=0.25
 # Rest API
 fastapi>=0.138
 uvicorn>=0.51
+python-multipart
 
 # Dev / testing
 pytest>=8.0

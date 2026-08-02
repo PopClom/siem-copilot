@@ -15,12 +15,21 @@ from pydantic import BaseModel, Field
 # Query endpoint
 # ---------------------------------------------------------------------------
 
+class HistoryTurn(BaseModel):
+    role: str      # "user" or "assistant"
+    content: str
+
+
 class QueryRequest(BaseModel):
     question: str = Field(
         ...,
         min_length=3,
         max_length=1000,
         examples=["Were there any lateral movement indicators in the last hour?"],
+    )
+    history: list[HistoryTurn] = Field(
+        default_factory=list,
+        description="Previous conversation turns for multi-turn context.",
     )
 
 
