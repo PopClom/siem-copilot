@@ -17,7 +17,7 @@ llm:
 rag:
   use-hyde: true
   expand-context: false
-  top-k: 15
+  top-k: 20
   score-threshold: 0.30
 
 grouping:

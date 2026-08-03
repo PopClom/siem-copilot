@@ -146,7 +146,7 @@ class RAGChain:
     answer directly from general knowledge.
     """
 
-    _MAX_CHARS = 100_000  # ~25 000 tokens at 4 chars/token
+    _MAX_CHARS = 200_000  # ~50 000 tokens at 4 chars/token
 
     def __init__(self, settings: Settings) -> None:
         rag_cfg = settings.rag

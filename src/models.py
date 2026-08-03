@@ -48,6 +48,7 @@ class EventWindow:
     events: list[NormalizedEvent] = field(default_factory=list)
     aggregated_text: str = ""
     source_name: str = ""
+    chunk_index: int = 0
 
     @property
     def id(self) -> str:
@@ -57,5 +58,6 @@ class EventWindow:
             self.host or "unknown_host",
             self.user or "any_user",
             self.window_start.isoformat(),
+            str(self.chunk_index),
         ]
         return "|".join(parts)

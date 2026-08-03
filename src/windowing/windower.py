@@ -174,7 +174,7 @@ def _events_to_windows(
         # ------------------------------------------------------------
         # Emit one EventWindow per chunk
         # ------------------------------------------------------------
-        for chunk in chunks:
+        for chunk_index, chunk in enumerate(chunks):
             window = EventWindow(
                 window_start=win_start,
                 window_end=win_end,
@@ -182,6 +182,7 @@ def _events_to_windows(
                 user=user,
                 events=chunk,
                 source_name=chunk[0].source_name,
+                chunk_index=chunk_index,
             )
             window.aggregated_text = _aggregate_text(window)
             yield window
