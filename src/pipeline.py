@@ -120,7 +120,9 @@ class IngestionPipeline:
             logger.warning("Source '%s': no windows generated.", source.name)
             return 0
 
-        logger.info("Source '%s': %d windows.", source.name, len(windows))
+        ids = [w.id for w in windows]
+        unique = set(ids)
+        logger.info("Windows: {%d}  Unique IDs: {%d}  Collisions: {%d}", len(ids), len(unique), len(ids)-len(unique))
 
         if self.dry_run:
             logger.info("[dry-run] Skipping embed + upsert.")
