@@ -67,6 +67,7 @@ def print_console_report(run: dict) -> None:
     print(f"  Mean F1@5             : {summary['mean_f1@5']:.3f}")
     print(f"  Mean MRR              : {summary['mean_mrr']:.3f}")
     print(f"  Mean latency          : {summary['mean_latency_ms']:.0f} ms")
+    print(f"  Human thumbs-up rate  : {summary.get('human_thumbs_up_rate', 0):.1%}")
     print("=" * 72 + "\n")
 
 
@@ -163,6 +164,42 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
     plt.close()
     print(f"  Saved: {path3}")
 
+    # ── Plot 4: Human evaluation — thumbs-up rate ────────────────────────
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    values = [
+        r["summary"].get("human_thumbs_up_rate", 0) * 100
+        for r in runs
+    ]
+
+    bars = ax.bar(
+        run_labels,
+        values,
+        color="seagreen",
+        alpha=0.85,
+        edgecolor="white",
+    )
+
+    ax.set_ylim(0, 105)
+    ax.set_title("Human Evaluation — Thumbs-Up Rate")
+    ax.set_ylabel("Positive responses (%)")
+    ax.tick_params(axis="x", rotation=30)
+
+    for bar, val in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 2,
+            f"{val:.0f}%",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+        )
+
+    plt.tight_layout()
+    path4 = output_dir / "human_eval.png"
+    plt.savefig(path4, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  Saved: {path4}")
 
 # ---------------------------------------------------------------------------
 # Helpers

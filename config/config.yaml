@@ -25,6 +25,7 @@ grouping:
   user: false
   time-window: 5s
   max-events-per-chunk: 100
+  overlap-ratio: 0.5
 
 anomaly:
   contamination: 0.10              # expected fraction of anomalous windows

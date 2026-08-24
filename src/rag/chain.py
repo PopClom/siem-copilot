@@ -93,11 +93,6 @@ TOOLS = [
                     "type": "string",
                     "description": "The search query derived from the analyst's question.",
                 },
-                "top_k": {
-                    "type": "integer",
-                    "description": "Number of log windows to retrieve (default 8).",
-                    "default": 8,
-                },
                 "filters": {
                     "type": "object",
                     "description": (
@@ -259,8 +254,8 @@ class RAGChain:
         Returns a dict with the context text + metadata for the LLM.
         """
         query   = tool_input.get("query", "")
-        top_k   = tool_input.get("top_k", self._retriever.top_k)
         filters = tool_input.get("filters") or None
+        top_k = self._retriever.top_k
 
         hypothetical_doc: Optional[str] = None
 

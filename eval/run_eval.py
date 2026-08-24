@@ -14,6 +14,9 @@ Usage
     # Specify questions file and API URL
     python eval/run_eval.py --questions eval/questions.yaml --api http://localhost:8000
 
+    # Skip interactive thumbs-up/down scoring
+    python eval/run_eval.py --no-human-eval
+
 The script:
   1. Loads questions.yaml (ground truth)
   2. For each configuration to test, calls the /query API endpoint
@@ -75,28 +78,28 @@ CONFIGS_TO_COMPARE = [
         "label":          "Baseline",
         "use_hyde":       False,
         "expand_context": False,
-        "time_window":    "10s",
+        "time_window":    "5s",
         "top_k":          20,
     },
     {
         "label":          "HyDE",
         "use_hyde":       True,
         "expand_context": False,
-        "time_window":    "10s",
+        "time_window":    "5s",
         "top_k":          20,
     },
     {
         "label":          "Expand",
         "use_hyde":       False,
         "expand_context": True,
-        "time_window":    "10s",
+        "time_window":    "5s",
         "top_k":          20,
     },
     {
         "label":          "HyDE+Expand",
         "use_hyde":       True,
         "expand_context": True,
-        "time_window":    "10s",
+        "time_window":    "5s",
         "top_k":          20,
     },
 ]
@@ -145,6 +148,7 @@ def run_single(
     config_meta: dict,
     api_url: str,
     k_values: list[int],
+    args: argparse.Namespace,
 ) -> dict:
     """
     Evaluate all questions against the currently running API config.
@@ -176,6 +180,30 @@ def run_single(
         if has_ground_truth:
             metrics = compute_all(retrieved_ids, relevant_ids, k_values=k_values)
 
+        # Optional simple human evaluation.
+        if not args.no_human_eval:
+            print(f"\n{'─'*60}")
+            print(f"Q: {question}")
+            print(f"Tool called: {tool_called}")
+            print(f"\nAnswer:\n{response.get('answer', '')}")
+            print(f"{'─'*60}")
+
+            while True:
+                raw = input("Your judgment — 👍 good / 👎 bad [y/n]: ").strip().lower()
+                if raw in {"y", "yes", "👍", "up"}:
+                    human_score = 1
+                    break
+                if raw in {"n", "no", "👎", "down"}:
+                    human_score = 0
+                    break
+                print("Enter y/yes/👍 for good or n/no/👎 for bad")
+
+            human_scores = {
+                "thumbs_up": human_score,
+            }
+        else:
+            human_scores = {}
+
         result = {
             "question_id":          qid,
             "question":             question,
@@ -186,6 +214,7 @@ def run_single(
             "retrieved_ids":        retrieved_ids,
             "relevant_ids":         list(relevant_ids),
             "metrics":              metrics,
+            "human_scores":          human_scores,
             "latency_ms":           response.get("latency_ms", wall_ms),
             "chunks_retrieved":     response.get("chunks_retrieved", 0),
             "chunks_used":          response.get("chunks_used", 0),
@@ -214,6 +243,7 @@ def run_single(
     # Aggregate summary — only over questions with ground truth
     gt_results = [r for r in question_results if r["has_ground_truth"]]
     all_results = question_results
+    scored = [r for r in question_results if r.get("human_scores")]
 
     def mean(vals): return sum(vals) / len(vals) if vals else 0.0
 
@@ -226,6 +256,9 @@ def run_single(
         "mean_latency_ms":   mean([r["latency_ms"]                    for r in all_results]),
         "n_questions":       len(all_results),
         "n_with_ground_truth": len(gt_results),
+        "human_thumbs_up_rate": mean(
+            [r["human_scores"]["thumbs_up"] for r in scored]
+        ),
     }
 
     return {
@@ -261,6 +294,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--k", nargs="+", type=int, default=[5, 10, 20],
         help="K values for Precision@K / Recall@K (default: 5 10 20)",
+    )
+    parser.add_argument(
+        "--no-human-eval", action="store_true",
+        help="Skip interactive thumbs-up/down scoring (retrieval metrics only)",
     )
     return parser.parse_args()
 
@@ -315,7 +352,7 @@ def main() -> None:
                 input(
                     "\n  ⚠  Update config.yaml and restart uvicorn, then press Enter to continue…"
                 )
-            run = run_single(questions, config_meta, args.api, args.k)
+            run = run_single(questions, config_meta, args.api, args.k, args)
             runs.append(run)
             print_console_report(run)
     else:
@@ -327,7 +364,7 @@ def main() -> None:
             "time_window":    None,
             "top_k":          None,
         }
-        runs = [run_single(questions, config_meta, args.api, args.k)]
+        runs = [run_single(questions, config_meta, args.api, args.k, args)]
         print_console_report(runs[0])
 
     # Save JSON

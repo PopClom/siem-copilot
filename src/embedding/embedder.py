@@ -11,7 +11,7 @@ Design decisions
 * The module returns plain Python lists (list[list[float]]) rather than
   NumPy arrays to keep the public API dependency-free.
 * For BGE models we prepend the recommended query/passage prefix
-  automatically (controlled by `use_instruction`).
+  automatically.
 """
 
 from __future__ import annotations
