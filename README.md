@@ -131,7 +131,27 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Run the CLI
+### 3. Start the infrastructure
+
+The project uses **Qdrant** as its vector database. A `docker-compose.yaml` file is provided to start Qdrant with persistent storage.
+
+Make sure Docker is installed and running, then start the service with:
+
+```bash
+docker compose up -d
+```
+
+This starts the Qdrant container in the background.
+
+The Qdrant storage is persisted in a Docker volume, so the data survives container restarts.
+
+To stop the service:
+
+```bash
+docker compose down
+```
+
+### 4. Run the CLI
 
 Start the main pipeline with:
 
@@ -157,7 +177,7 @@ For anomaly detection without generating the LLM summary:
 python main.py --detect-anomalies --since 24h --no-llm-summary
 ```
 
-### 4. Run the API
+### 5. Run the API
 
 Start the FastAPI application with:
 

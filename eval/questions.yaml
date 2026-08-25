@@ -50,7 +50,7 @@ questions:
     question: "Were there any lateral movement indicators?"
     expected_tool: semantic_search
     relevant_window_ids: []
-    notes: "Should not find any evidence"
+    notes: "Should find WinRS/WinRM remote command execution"
 
   - id: q4
     question: "Were there anomalies or outliers in the dataset?"

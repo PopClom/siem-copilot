@@ -299,6 +299,11 @@ def parse_args() -> argparse.Namespace:
         "--no-human-eval", action="store_true",
         help="Skip interactive thumbs-up/down scoring (retrieval metrics only)",
     )
+    parser.add_argument(
+        "--from-results",
+        metavar="PATH",
+        help="Path to a previously saved eval JSON — skip evaluation and generate plots only",
+    )
     return parser.parse_args()
 
 
@@ -338,6 +343,15 @@ def main() -> None:
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    if args.from_results:
+        import json
+        with open(args.from_results, encoding="utf-8") as f:
+            runs = json.load(f)
+        plots_dir = RESULTS_DIR / f"plots_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        print(f"Generating plots from {args.from_results} …")
+        save_plots(runs, plots_dir)
+        print("Done.")
+        return
     if args.compare:
         # Sequential multi-config comparison
         runs: list[dict] = []

@@ -107,7 +107,7 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
     ):
         values = [r["summary"].get(metric, 0) for r in runs]
         bars = ax.bar(run_labels, values, color=color, alpha=0.85, edgecolor="white")
-        ax.set_ylim(0, 1.05)
+        ax.set_ylim(0, 1.15)
         ax.set_title(metric.replace("mean_", "").replace("@", "@").upper())
         ax.set_ylabel("Score")
         ax.tick_params(axis="x", rotation=30)
@@ -125,7 +125,7 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
     fig, ax = plt.subplots(figsize=(8, 4))
     values = [r["summary"].get("mean_mrr", 0) for r in runs]
     bars = ax.bar(run_labels, values, color="mediumpurple", alpha=0.85, edgecolor="white")
-    ax.set_ylim(0, 1.05)
+    ax.set_ylim(0, 1.15)
     ax.set_title("Mean Reciprocal Rank (MRR) across Configurations")
     ax.set_ylabel("MRR")
     ax.tick_params(axis="x", rotation=30)
@@ -150,7 +150,7 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
 
     routing_acc = [r["summary"].get("tool_routing_accuracy", 0) for r in runs]
     bars2 = ax2.bar(run_labels, routing_acc, color="teal", alpha=0.85, edgecolor="white")
-    ax2.set_ylim(0, 1.05)
+    ax2.set_ylim(0, 1.15)
     ax2.set_title("Tool Routing Accuracy")
     ax2.set_ylabel("Fraction correct")
     ax2.tick_params(axis="x", rotation=30)
@@ -180,7 +180,7 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
         edgecolor="white",
     )
 
-    ax.set_ylim(0, 105)
+    ax.set_ylim(0, 115)
     ax.set_title("Human Evaluation — Thumbs-Up Rate")
     ax.set_ylabel("Positive responses (%)")
     ax.tick_params(axis="x", rotation=30)
