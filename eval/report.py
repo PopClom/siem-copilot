@@ -98,7 +98,6 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
 
     # ── Plot 1: Precision / Recall / F1 @ 5 comparison ──────────────────
     fig, axes = plt.subplots(1, 3, figsize=(14, 5))
-    fig.suptitle("Retrieval Metrics @ K=5 across Configurations", fontsize=13)
 
     for ax, metric, color in zip(
         axes,
@@ -121,26 +120,39 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
     plt.close()
     print(f"  Saved: {path1}")
 
-    # ── Plot 2: MRR comparison ───────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(8, 4))
-    values = [r["summary"].get("mean_mrr", 0) for r in runs]
-    bars = ax.bar(run_labels, values, color="mediumpurple", alpha=0.85, edgecolor="white")
-    ax.set_ylim(0, 1.15)
-    ax.set_title("Mean Reciprocal Rank (MRR) across Configurations")
-    ax.set_ylabel("MRR")
-    ax.tick_params(axis="x", rotation=30)
-    for bar, val in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.02,
+    # ── Plot 2: MRR + Human evaluation ──────────────────────────────
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+    # MRR
+    values_mrr = [r["summary"].get("mean_mrr", 0) for r in runs]
+    bars1 = ax1.bar(run_labels, values_mrr, color="mediumpurple", alpha=0.85, edgecolor="white")
+    ax1.set_ylim(0, 1.15)
+    ax1.set_title("Mean Reciprocal Rank (MRR)")
+    ax1.set_ylabel("MRR")
+    ax1.tick_params(axis="x", rotation=30)
+    for bar, val in zip(bars1, values_mrr):
+        ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
                 f"{val:.3f}", ha="center", va="bottom", fontsize=10)
+
+    # Human eval — thumbs-up rate
+    values_hu = [r["summary"].get("human_thumbs_up_rate", 0) * 100 for r in runs]
+    bars2 = ax2.bar(run_labels, values_hu, color="seagreen", alpha=0.85, edgecolor="white")
+    ax2.set_ylim(0, 115)
+    ax2.set_title("Human Evaluation — Thumbs-Up Rate")
+    ax2.set_ylabel("Positive responses (%)")
+    ax2.tick_params(axis="x", rotation=30)
+    for bar, val in zip(bars2, values_hu):
+        ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2,
+                f"{val:.0f}%", ha="center", va="bottom", fontsize=10)
+
     plt.tight_layout()
-    path2 = output_dir / "mrr_comparison.png"
+    path2 = output_dir / "mrr_human_eval.png"
     plt.savefig(path2, dpi=150, bbox_inches="tight")
     plt.close()
     print(f"  Saved: {path2}")
 
     # ── Plot 3: Latency + tool routing accuracy ──────────────────────────
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-    fig.suptitle("Operational Metrics across Configurations", fontsize=13)
 
     latencies = [r["summary"].get("mean_latency_ms", 0) for r in runs]
     ax1.bar(run_labels, latencies, color="salmon", alpha=0.85, edgecolor="white")
@@ -163,43 +175,6 @@ def save_plots(runs: list[dict], output_dir: Path) -> None:
     plt.savefig(path3, dpi=150, bbox_inches="tight")
     plt.close()
     print(f"  Saved: {path3}")
-
-    # ── Plot 4: Human evaluation — thumbs-up rate ────────────────────────
-    fig, ax = plt.subplots(figsize=(10, 4))
-
-    values = [
-        r["summary"].get("human_thumbs_up_rate", 0) * 100
-        for r in runs
-    ]
-
-    bars = ax.bar(
-        run_labels,
-        values,
-        color="seagreen",
-        alpha=0.85,
-        edgecolor="white",
-    )
-
-    ax.set_ylim(0, 115)
-    ax.set_title("Human Evaluation — Thumbs-Up Rate")
-    ax.set_ylabel("Positive responses (%)")
-    ax.tick_params(axis="x", rotation=30)
-
-    for bar, val in zip(bars, values):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 2,
-            f"{val:.0f}%",
-            ha="center",
-            va="bottom",
-            fontsize=10,
-        )
-
-    plt.tight_layout()
-    path4 = output_dir / "human_eval.png"
-    plt.savefig(path4, dpi=150, bbox_inches="tight")
-    plt.close()
-    print(f"  Saved: {path4}")
 
 # ---------------------------------------------------------------------------
 # Helpers
