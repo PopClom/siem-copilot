@@ -1,0 +1,781 @@
+[
+  {
+    "run_id": "Baseline_221232",
+    "config": {
+      "label": "Baseline",
+      "use_hyde": false,
+      "expand_context": false,
+      "time_window": "5s",
+      "top_k": 20
+    },
+    "question_results": [
+      {
+        "question_id": "q1",
+        "question": "Were there any PowerShell execution events with encoded commands?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:20+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:18+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|10",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:04+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|2"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4"
+        ],
+        "metrics": {
+          "precision": 0.15,
+          "recall": 0.3,
+          "f1": 0.2,
+          "mrr": 1.0,
+          "n_retrieved": 20,
+          "n_relevant": 10,
+          "n_hits": 3
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 25909,
+        "chunks_retrieved": 20,
+        "chunks_used": 20,
+        "neighbours_added": 0
+      },
+      {
+        "question_id": "q2",
+        "question": "Did you detect any evidence of credential dumping or Active Directory database extraction?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:02+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|3"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:02+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1"
+        ],
+        "metrics": {
+          "precision": 0.13333333333333333,
+          "recall": 0.2,
+          "f1": 0.16,
+          "mrr": 0.3333333333333333,
+          "n_retrieved": 15,
+          "n_relevant": 10,
+          "n_hits": 2
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 20920,
+        "chunks_retrieved": 20,
+        "chunks_used": 15,
+        "neighbours_added": 0
+      },
+      {
+        "question_id": "q3",
+        "question": "Were there any lateral movement indicators?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:02+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:58+00:00|0"
+        ],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 0
+        },
+        "latency_ms": 14207,
+        "chunks_retrieved": 20,
+        "chunks_used": 15,
+        "neighbours_added": 0
+      },
+      {
+        "question_id": "q4",
+        "question": "Were there anomalies or outliers in the dataset?",
+        "tool_called": "detect_anomalies",
+        "expected_tool": "detect_anomalies",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 37059,
+        "chunks_retrieved": 0,
+        "chunks_used": 0,
+        "neighbours_added": 0
+      }
+    ],
+    "summary": {
+      "tool_routing_accuracy": 1.0,
+      "mean_mrr": 0.6666666666666666,
+      "mean_latency_ms": 24523.75,
+      "n_questions": 4,
+      "n_with_ground_truth": 2,
+      "human_thumbs_up_rate": 0.75,
+      "mean_precision": 0.14166666666666666,
+      "mean_recall": 0.25,
+      "mean_f1": 0.18
+    }
+  },
+  {
+    "run_id": "HyDE_222429",
+    "config": {
+      "label": "HyDE",
+      "use_hyde": true,
+      "expand_context": false,
+      "time_window": "5s",
+      "top_k": 20
+    },
+    "question_results": [
+      {
+        "question_id": "q1",
+        "question": "Were there any PowerShell execution events with encoded commands?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|10",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:20+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:04+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:18+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:02+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4"
+        ],
+        "metrics": {
+          "precision": 0.2,
+          "recall": 0.4,
+          "f1": 0.26666666666666666,
+          "mrr": 1.0,
+          "n_retrieved": 20,
+          "n_relevant": 10,
+          "n_hits": 4
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 36501,
+        "chunks_retrieved": 20,
+        "chunks_used": 20,
+        "neighbours_added": 0
+      },
+      {
+        "question_id": "q2",
+        "question": "Did you detect any evidence of credential dumping or Active Directory database extraction?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|8",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:04+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:04+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:02+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:52+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:06+00:00|11"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:02+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1"
+        ],
+        "metrics": {
+          "precision": 0.3,
+          "recall": 0.6,
+          "f1": 0.4,
+          "mrr": 1.0,
+          "n_retrieved": 20,
+          "n_relevant": 10,
+          "n_hits": 6
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 38200,
+        "chunks_retrieved": 20,
+        "chunks_used": 20,
+        "neighbours_added": 0
+      },
+      {
+        "question_id": "q3",
+        "question": "Were there any lateral movement indicators?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:56+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:08+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:24+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|8",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:24+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:06+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:04+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:20+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:24+00:00|10"
+        ],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 30715,
+        "chunks_retrieved": 20,
+        "chunks_used": 20,
+        "neighbours_added": 0
+      },
+      {
+        "question_id": "q4",
+        "question": "Were there anomalies or outliers in the dataset?",
+        "tool_called": "detect_anomalies",
+        "expected_tool": "detect_anomalies",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 27234,
+        "chunks_retrieved": 0,
+        "chunks_used": 0,
+        "neighbours_added": 0
+      }
+    ],
+    "summary": {
+      "tool_routing_accuracy": 1.0,
+      "mean_mrr": 1.0,
+      "mean_latency_ms": 33162.5,
+      "n_questions": 4,
+      "n_with_ground_truth": 2,
+      "human_thumbs_up_rate": 1.0,
+      "mean_precision": 0.25,
+      "mean_recall": 0.5,
+      "mean_f1": 0.33333333333333337
+    }
+  },
+  {
+    "run_id": "Expand_223630",
+    "config": {
+      "label": "Expand",
+      "use_hyde": false,
+      "expand_context": true,
+      "time_window": "5s",
+      "top_k": 20
+    },
+    "question_results": [
+      {
+        "question_id": "q1",
+        "question": "Were there any PowerShell execution events with encoded commands?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|10",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:04+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:18+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:20+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:18+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:40+00:00|1"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4"
+        ],
+        "metrics": {
+          "precision": 0.17391304347826086,
+          "recall": 0.4,
+          "f1": 0.24242424242424243,
+          "mrr": 1.0,
+          "n_retrieved": 23,
+          "n_relevant": 10,
+          "n_hits": 4
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 29469,
+        "chunks_retrieved": 20,
+        "chunks_used": 23,
+        "neighbours_added": 17
+      },
+      {
+        "question_id": "q2",
+        "question": "Did you detect any evidence of credential dumping or Active Directory database extraction?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:02+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|8",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:30+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:24+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:04+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:48+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:24+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:22+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:46+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|13",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:44+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:46+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:52+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:56+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:20+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:30+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:32+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:02+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1"
+        ],
+        "metrics": {
+          "precision": 0.06896551724137931,
+          "recall": 0.2,
+          "f1": 0.10256410256410257,
+          "mrr": 0.05,
+          "n_retrieved": 29,
+          "n_relevant": 10,
+          "n_hits": 2
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 28395,
+        "chunks_retrieved": 20,
+        "chunks_used": 29,
+        "neighbours_added": 26
+      },
+      {
+        "question_id": "q3",
+        "question": "Were there any lateral movement indicators?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:02+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|4"
+        ],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 0
+        },
+        "latency_ms": 14970,
+        "chunks_retrieved": 20,
+        "chunks_used": 14,
+        "neighbours_added": 7
+      },
+      {
+        "question_id": "q4",
+        "question": "Were there anomalies or outliers in the dataset?",
+        "tool_called": "detect_anomalies",
+        "expected_tool": "detect_anomalies",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 28350,
+        "chunks_retrieved": 0,
+        "chunks_used": 0,
+        "neighbours_added": 0
+      }
+    ],
+    "summary": {
+      "tool_routing_accuracy": 1.0,
+      "mean_mrr": 0.525,
+      "mean_latency_ms": 25296.0,
+      "n_questions": 4,
+      "n_with_ground_truth": 2,
+      "human_thumbs_up_rate": 0.75,
+      "mean_precision": 0.12143928035982009,
+      "mean_recall": 0.30000000000000004,
+      "mean_f1": 0.1724941724941725
+    }
+  },
+  {
+    "run_id": "HyDE+Expand_224349",
+    "config": {
+      "label": "HyDE+Expand",
+      "use_hyde": true,
+      "expand_context": true,
+      "time_window": "5s",
+      "top_k": 20
+    },
+    "question_results": [
+      {
+        "question_id": "q1",
+        "question": "Were there any PowerShell execution events with encoded commands?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:04+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|10",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|8",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:12+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:18+00:00|0"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:42+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4"
+        ],
+        "metrics": {
+          "precision": 0.2727272727272727,
+          "recall": 0.6,
+          "f1": 0.37499999999999994,
+          "mrr": 0.5,
+          "n_retrieved": 22,
+          "n_relevant": 10,
+          "n_hits": 6
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 44816,
+        "chunks_retrieved": 20,
+        "chunks_used": 22,
+        "neighbours_added": 14
+      },
+      {
+        "question_id": "q2",
+        "question": "Did you detect any evidence of credential dumping or Active Directory database extraction?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": true,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|8",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:22+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:24+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:04+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:30+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:36+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:00+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|4"
+        ],
+        "relevant_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:34+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:10+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|7",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:14+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:32+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:28+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:02+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1"
+        ],
+        "metrics": {
+          "precision": 0.2857142857142857,
+          "recall": 0.6,
+          "f1": 0.3870967741935483,
+          "mrr": 1.0,
+          "n_retrieved": 21,
+          "n_relevant": 10,
+          "n_hits": 6
+        },
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 48399,
+        "chunks_retrieved": 20,
+        "chunks_used": 21,
+        "neighbours_added": 18
+      },
+      {
+        "question_id": "q3",
+        "question": "Were there any lateral movement indicators?",
+        "tool_called": "semantic_search",
+        "expected_tool": "semantic_search",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:52:56+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:26+00:00|11",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:52+00:00|2",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:58+00:00|0",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:54:38+00:00|1",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:56+00:00|6",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|3",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:14+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|5",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:12+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:53:54+00:00|4",
+          "splunk_attack_sysmon|win-dc-8537412.attackrange.local|any_user|2020-10-08T12:55:10+00:00|2"
+        ],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 30222,
+        "chunks_retrieved": 20,
+        "chunks_used": 16,
+        "neighbours_added": 17
+      },
+      {
+        "question_id": "q4",
+        "question": "Were there anomalies or outliers in the dataset?",
+        "tool_called": "detect_anomalies",
+        "expected_tool": "detect_anomalies",
+        "tool_routing_correct": true,
+        "has_ground_truth": false,
+        "retrieved_ids": [],
+        "relevant_ids": [],
+        "metrics": {},
+        "human_scores": {
+          "thumbs_up": 1
+        },
+        "latency_ms": 27419,
+        "chunks_retrieved": 0,
+        "chunks_used": 0,
+        "neighbours_added": 0
+      }
+    ],
+    "summary": {
+      "tool_routing_accuracy": 1.0,
+      "mean_mrr": 0.75,
+      "mean_latency_ms": 37714.0,
+      "n_questions": 4,
+      "n_with_ground_truth": 2,
+      "human_thumbs_up_rate": 1.0,
+      "mean_precision": 0.2792207792207792,
+      "mean_recall": 0.6,
+      "mean_f1": 0.38104838709677413
+    }
+  }
+]
