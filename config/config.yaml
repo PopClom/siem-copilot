@@ -11,7 +11,7 @@ vector-db:
 
 llm:
   model: claude-sonnet-5
-  api-key:
+  api-key: ANTHROPIC_API_KEY # reads from ANTHROPIC_API_KEY environment variable
   temperature: 0.0 # ignored for sonnet 5 as it uses adaptive thinking
 
 rag:
